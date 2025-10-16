@@ -411,6 +411,68 @@
         .category-item.active .arrow {
             transform: rotate(180deg);
         }
+        /* Gộp 2 input trên 1 dòng */
+.input-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.input-group-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.input-group-inline input {
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+/* Điều chỉnh hàng tồn */
+.adjustment-box {
+    margin-top: 25px;
+    padding: 15px;
+    border-radius: 10px;
+    background: #f9f9f9;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.adjustment-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.adjustment-row select, 
+.adjustment-row input {
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.adjustment-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.adjustment-table th, 
+.adjustment-table td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: center;
+}
+
+.adjustment-table th {
+    background: #f0f0f0;
+}
+
     </style>
 </head>
 <body>
@@ -500,12 +562,56 @@
         </div>
 
         <!-- Inventory Section -->
-        <div id="inventorySection" class="main-content content-section">
-            <button class="btn back-btn" onclick="showMainMenu()">← Quay Lại</button>
-            <h2 class="section-title">Kiểm Hàng Tồn Kho</h2>
-            <div id="inventoryList" class="category-list"></div>
-            <button class="btn save-btn" onclick="saveInventory()">Lưu Kiểm Hàng</button>
+   <div id="inventorySection" class="main-content content-section">
+    <button class="btn back-btn" onclick="showMainMenu()">← Quay Lại</button>
+
+    <!-- 🔹 Thông tin nhập kiểm hàng -->
+    <div class="input-row">
+        <div class="input-group-inline">
+            <label for="inventoryDate">📅 Ngày nhập:</label>
+            <input type="date" id="inventoryDate">
         </div>
+
+        <div class="input-group-inline">
+            <label for="inventoryUser">👤 Người nhập:</label>
+            <input type="text" id="inventoryUser" placeholder="Nhập tên người kiểm hàng">
+        </div>
+    </div>
+
+    <h2 class="section-title">Kiểm Hàng Tồn Kho</h2>
+    <div id="inventoryList" class="category-list"></div>
+    <button class="btn save-btn" onclick="saveInventory()">💾 Lưu Kiểm Hàng</button>
+
+    <!-- 🔧 Điều chỉnh hàng tồn -->
+    <div id="adjustmentSection" class="adjustment-box">
+        <h3>🔧 Điều chỉnh hàng tồn</h3>
+
+        <div class="adjustment-row">
+            <select id="adjustProductSelect">
+                <option value="">-- Chọn sản phẩm --</option>
+            </select>
+
+            <input type="number" id="adjustQtyInput" placeholder="Số lượng mới" min="0">
+
+            <button class="btn small-btn" onclick="addAdjustment()">+ Thêm</button>
+        </div>
+
+        <table id="adjustmentTable" class="adjustment-table">
+            <thead>
+                <tr>
+                    <th>Tên hàng</th>
+                    <th>Số lượng mới</th>
+                    <th>Xóa</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <button class="btn save-btn" onclick="saveAdjustments()">💾 Lưu thay đổi</button>
+    </div>
+        </div>
+
+       
 
         <!-- Order Section -->
         <div id="orderSection" class="main-content content-section">
@@ -703,8 +809,17 @@
             
             initInventoryData();
             renderInventory();
+            loadAdjustmentProducts();
             showMainMenu();
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateInput = document.getElementById('inventoryDate');
+            if (dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+        });
 
         function logout() {
             if (confirm('Bạn có chắc muốn đăng xuất?')) {
@@ -715,6 +830,7 @@
                 currentStore = null;
             }
         }
+
 
         function showMainMenu() {
             document.getElementById('mainMenu').style.display = 'block';
@@ -771,24 +887,196 @@
             }
         }
 
-        function renderOrderList() {
-            const container = document.getElementById('orderList');
-            container.innerHTML = '';
-            
-            for (let item in inventoryData) {
-                const itemDiv = document.createElement('div');
-                const stock = inventoryData[item];
-                const isLowStock = (item === 'Sốt cà chua') ? false : stock < 3;
-                
-                itemDiv.className = 'order-item' + (isLowStock ? ' low-stock' : '');
-                itemDiv.innerHTML = `
-                    <span class="order-item-name">${item}</span>
-                    <span class="order-item-stock">Tồn: ${stock}</span>
-                    <input type="number" min="0" value="0" placeholder="Số lượng đặt">
-                `;
-                container.appendChild(itemDiv);
+                function loadAdjustmentProducts() {
+            const select = document.getElementById("adjustProductSelect");
+            if (!select) return;
+
+            select.innerHTML = '<option value="">-- Chọn sản phẩm --</option>';
+
+            // 🔹 Nếu có biến categories thì dùng, không thì lấy từ inventoryData
+            if (typeof categories !== 'undefined') {
+                for (const [groupName, items] of Object.entries(categories)) {
+                    items.forEach(item => {
+                        const option = document.createElement("option");
+                        option.value = item;
+                        option.textContent = `${groupName} - ${item}`;
+                        select.appendChild(option);
+                    });
+                }
+            } else if (typeof inventoryData !== 'undefined') {
+                for (const item of Object.keys(inventoryData)) {
+                    const option = document.createElement("option");
+                    option.value = item;
+                    option.textContent = item;
+                    select.appendChild(option);
+                }
             }
         }
+
+        function addAdjustment() {
+                const productSelect = document.getElementById('adjustProductSelect');
+                const qtyInput = document.getElementById('adjustQtyInput');
+                const tableBody = document.querySelector('#adjustmentTable tbody');
+
+                const product = productSelect.value;
+                const qty = parseFloat(qtyInput.value);
+
+                if (!product) {
+                    alert("⚠️ Vui lòng chọn sản phẩm!");
+                    return;
+                }
+                if (isNaN(qty)) {
+                    alert("⚠️ Vui lòng nhập số lượng mới!");
+                    return;
+                }
+
+                // 🔹 Thêm vào danh sách điều chỉnh
+                adjustments.push({ product, qty });
+
+                // 🔹 Hiển thị lên bảng
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product}</td>
+                    <td>${qty}</td>
+                    <td><button class="btn small-btn" onclick="removeAdjustment(this)">🗑️</button></td>
+                `;
+                tableBody.appendChild(row);
+
+                // Reset input
+                productSelect.value = "";
+                qtyInput.value = "";
+            }
+                window.addAdjustment = addAdjustment;
+                window.removeAdjustment = removeAdjustment;
+                window.saveAdjustments = saveAdjustments;
+
+
+            function removeAdjustment(button) {
+                const row = button.closest('tr');
+                const productName = row.children[0].textContent;
+                adjustments = adjustments.filter(a => a.product !== productName);
+                row.remove();
+            }
+
+           async function saveAdjustments() {
+    if (adjustments.length === 0) {
+        alert("⚠️ Chưa có sản phẩm nào để lưu!");
+        return;
+    }
+
+    const dateInput = document.getElementById('inventoryDate').value;
+    if (!dateInput) {
+        alert("⚠️ Vui lòng chọn ngày kiểm hàng!");
+        return;
+    }
+
+    try {
+        // 🔹 Lấy dữ liệu tồn kho cũ
+        const { data: existing, error: existingError } = await supabase
+            .from('ton_quan')
+            .select('id, inventory')
+            .eq('store_id', currentStore)
+            .eq('date', dateInput)
+            .single();
+
+        if (existingError && existingError.code !== 'PGRST116') throw existingError;
+
+        const oldInventory = existing?.inventory || {};
+
+        // 🔹 Cập nhật số lượng cho các sản phẩm được điều chỉnh
+        const newInventory = { ...oldInventory };
+        adjustments.forEach(adj => {
+            newInventory[adj.product] = adj.qty;
+        });
+
+        // 🔹 Xóa bản ghi cũ (nếu có)
+        if (existing) {
+            const { error: delError } = await supabase
+                .from('ton_quan')
+                .delete()
+                .eq('id', existing.id);
+            if (delError) throw delError;
+        }
+
+        // 🔹 Thêm bản ghi mới (tồn kho sau điều chỉnh)
+        const { error: insertError } = await supabase
+            .from('ton_quan')
+            .insert([
+                {
+                    store_id: currentStore,
+                    date: dateInput,
+                    inventory: newInventory
+                }
+            ]);
+
+        if (insertError) throw insertError;
+
+        // 🔹 Cập nhật local và giao diện
+        inventoryData = newInventory;
+        adjustments = [];
+        document.querySelector('#adjustmentTable tbody').innerHTML = "";
+
+        alert("✅ Đã lưu tồn kho sau điều chỉnh!");
+        // ✅ Gọi cập nhật lại giao diện đặt hàng
+await new Promise(r => setTimeout(r, 1000)); // đợi 0.3s cho Supabase cập nhật xong
+await renderOrderList();
+
+    } catch (err) {
+        console.error("❌ Lỗi khi lưu điều chỉnh:", err);
+        alert("❌ Có lỗi khi lưu điều chỉnh!");
+    }
+}
+
+        async function renderOrderList() {
+    const container = document.getElementById('orderList');
+    container.innerHTML = '<div class="loading">⏳ Đang tải dữ liệu tồn kho...</div>';
+
+    try {
+        // 🔹 Lấy bản ghi mới nhất theo created_at
+        const { data, error } = await supabase
+            .from('ton_quan')
+            .select('inventory, date, created_at')
+            .eq('store_id', currentStore)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (error) throw error;
+        if (!data || data.length === 0) {
+            container.innerHTML = '<p>⚠️ Chưa có dữ liệu tồn kho cho quán này.</p>';
+            return;
+        }
+
+        const latest = data[0];
+        inventoryData = latest.inventory || {};
+
+        container.innerHTML = '';
+
+        for (const [item, stock] of Object.entries(inventoryData)) {
+            const isLowStock = stock < 3;
+            const div = document.createElement('div');
+            div.className = `order-item${isLowStock ? ' low-stock' : ''}`;
+            div.innerHTML = `
+                <span class="order-item-name">${item}</span>
+                <span class="order-item-stock">Tồn: ${stock}</span>
+                <input type="number" min="0" value="0" placeholder="Số lượng đặt">
+            `;
+            container.appendChild(div);
+        }
+
+        const info = document.createElement('div');
+        info.className = 'info-text';
+        info.style.marginTop = '8px';
+        info.style.fontSize = '13px';
+        info.style.color = '#777';
+        info.textContent = `📅 Dữ liệu tồn kho mới nhất: ${new Date(latest.date).toLocaleDateString('vi-VN')} (cập nhật ${new Date(latest.created_at).toLocaleString('vi-VN')})`;
+        container.appendChild(info);
+
+    } catch (err) {
+        console.error('❌ Lỗi renderOrderList:', err);
+        container.innerHTML = '<p>❌ Không thể tải dữ liệu tồn kho. Vui lòng thử lại!</p>';
+    }
+}
+            
 
         function checkPizza() {
             const pizzaL_system = parseInt(document.getElementById('pizzaL_system').value) || 0;
@@ -874,26 +1162,80 @@
             }
         }
 
-        async function saveInventory() {
-            const data = {
-                store_id: currentStore,
-                username: currentUser,
-                date: new Date().toISOString(),
-                inventory: inventoryData
-            };
+          // --- 🧾 Lưu điều chỉnh tồn kho ---
+async function saveAdjustments() {
+    if (adjustments.length === 0) {
+        alert("⚠️ Chưa có sản phẩm nào để lưu!");
+        return;
+    }
 
-            try {
-                const { error } = await supabase.from('ton_quan').insert([data]);
-                if (error) throw error;
-                alert('Đã lưu kiểm hàng thành công!');
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Có lỗi khi lưu dữ liệu. Vui lòng thử lại!');
-            }
+    const dateInput = document.getElementById('inventoryDate').value;
+    const userInput = document.getElementById('inventoryUser').value.trim();
+
+    if (!dateInput || !userInput) {
+        alert("⚠️ Vui lòng nhập đủ ngày và người kiểm hàng!");
+        return;
+    }
+
+    try {
+        // 🔹 Lấy bản tồn kho mới nhất của quán
+        const { data: latest, error: latestError } = await supabase
+            .from('ton_quan')
+            .select('inventory')
+            .eq('store_id', currentStore)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (latestError) throw latestError;
+
+        let inventory = latest && latest.length > 0
+            ? { ...latest[0].inventory }
+            : {};
+
+        // 🔹 Cập nhật các mặt hàng được điều chỉnh
+        adjustments.forEach(adj => {
+            inventory[adj.product] = adj.qty;
+        });
+
+        // 🔹 Tạo dữ liệu mới (lưu thành bản ghi mới chứ không ghi đè)
+        const newRecord = {
+            store_id: currentStore,
+            date: dateInput,
+            username: currentUser,
+            input_user: userInput,
+            inventory: inventory
+        };
+
+        const { error: insertError } = await supabase
+            .from('ton_quan')
+            .insert([newRecord]);
+
+        if (insertError) throw insertError;
+
+        alert("✅ Đã lưu điều chỉnh tồn kho mới nhất!");
+
+        // 🔹 Cập nhật lại biến inventoryData cục bộ
+        inventoryData = inventory;
+
+        // 🔹 Làm sạch danh sách điều chỉnh
+        adjustments = [];
+        document.querySelector('#adjustmentTable tbody').innerHTML = "";
+
+        // 🔹 Render lại danh sách đặt hàng (tab xưởng)
+        if (typeof renderOrderList === 'function') {
+            renderOrderList();
         }
 
+    } catch (err) {
+        console.error("❌ Lỗi khi lưu điều chỉnh:", err);
+        alert("❌ Lỗi khi lưu điều chỉnh, vui lòng thử lại!");
+    }
+}
 
-                    async function saveOrder() {
+
+
+
+                async function saveOrder() {
                 const orderItems = [];
                 const inputs = document.querySelectorAll('#orderList input');
                 const items = Object.keys(inventoryData);
@@ -994,6 +1336,22 @@ _Hệ thống quản lý Pizza_`;
             }
 
 
+            function updateOrderList() {
+                const orderList = document.getElementById('orderList');
+                orderList.innerHTML = ''; // Xóa cũ, tạo mới
+
+                for (const [item, qty] of Object.entries(inventoryData)) {
+                    const row = document.createElement('div');
+                    row.classList.add('order-item');
+                    row.innerHTML = `
+                        <span>${item}</span>
+                        <span>📦 Tồn: ${qty}</span>
+                        <input type="number" min="0" value="0">
+                    `;
+                    orderList.appendChild(row);
+                }
+            }
+
         async function savePizzaCheck() {
             if (!pizzaCheckData) {
                 alert('Vui lòng kiểm tra bánh trước khi lưu!');
@@ -1016,7 +1374,9 @@ _Hệ thống quản lý Pizza_`;
                 alert('Có lỗi khi lưu dữ liệu. Vui lòng thử lại!');
             }
         }
-    
+                let adjustments = [];
+        
+
     </script>
 </body>
 </html>
