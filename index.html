@@ -796,6 +796,8 @@
                     ],
         };
 
+       
+
         // Sales categories and products
          const categories = [
             { id: 1, name: 'Pizza Truyền thống' },
@@ -868,11 +870,16 @@
 
         ];
 
+        const salesCategories = categories;
+        const salesProducts = products;
+
         let currentUser = null;
         let currentStore = null;
         let inventoryData = {};
         let adjustments = [];
         let selectedSalesCategory = null;
+
+    
 
         // Initialize
         function initInventoryData() {
@@ -986,7 +993,9 @@
             if (section === 'sales') {
                 const saleDate = document.getElementById('saleDate');
                 if (saleDate) saleDate.value = new Date().toISOString().split('T')[0];
+                 loadSalesCategories(); 
             }
+            
         }
 
 
@@ -1183,6 +1192,8 @@
                 alert("❌ Lỗi khi lưu điều chỉnh: " + err.message);
             }
         }
+
+        // Đặt hàng function
 
         async function renderOrderList() {
             const container = document.getElementById('orderList');
