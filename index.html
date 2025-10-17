@@ -524,6 +524,13 @@
             <!-- Revenue Section -->
             <div id="revenueSection" class="content-section">
                 <button class="btn back-btn" onclick="showMainMenu()">← Quay Lại</button>
+
+                <div class="input-row">
+                    <div class="input-group-inline">
+                        <label for="revenueDate">📅 Ngày nhập:</label>
+                        <input type="date" id="revenueDate">
+                    </div>
+                </div>
                 <h2 class="section-title">Nhập Doanh Thu</h2>
                 <div class="revenue-grid">
                     <div class="revenue-item">
@@ -996,6 +1003,11 @@
                  loadSalesCategories(); 
             }
             
+            // 📊 Nếu mở tab Nhập Doanh Thu → gán ngày hôm nay
+            if (section === 'revenue') {
+                const revenueDate = document.getElementById('revenueDate');
+                if (revenueDate) revenueDate.value = new Date().toISOString().split('T')[0];
+            }
         }
 
 
@@ -1217,6 +1229,9 @@
                 const latest = data[0];
                 inventoryData = latest.inventory || {};
 
+                const baseLToday = inventoryData['Đế L'] || 0;
+                const baseSToday = inventoryData['Đế S'] || 0;
+
                 container.innerHTML = '';
 
                 const sortedItems = Object.entries(inventoryData).sort((a, b) => a[1] - b[1]);
@@ -1261,7 +1276,14 @@
             if (el) formatNumberInput(el);
         });
 
-        async function saveRevenue() {
+                async function saveRevenue() {
+            const revenueDate = document.getElementById('revenueDate')?.value;
+            
+            if (!revenueDate) {
+                alert('⚠️ Vui lòng chọn ngày bán!');
+                return;
+            }
+
             const cash = parseFloat(document.getElementById('cashRevenue').value.replace(/\./g, '')) || 0;
             const transfer = parseFloat(document.getElementById('transferRevenue').value.replace(/\./g, '')) || 0;
             const grab = parseFloat(document.getElementById('grabRevenue').value.replace(/\./g, '')) || 0;
@@ -1270,7 +1292,7 @@
             const data = {
                 store_id: currentStore,
                 username: currentUser,
-                date: new Date().toISOString().split('T')[0],
+                date: revenueDate, // ← Lưu ngày người dùng chọn
                 cash_revenue: cash,
                 transfer_revenue: transfer,
                 grab_revenue: grab,
@@ -1282,8 +1304,8 @@
             try {
                 const { error } = await supabase.from('sale_quan').insert([data]).select();
                 if (error) throw error;
-                alert('✅ Đã lưu doanh thu thành công!');
-                document.querySelectorAll('#revenueSection input').forEach(input => input.value = '');
+                alert('✅ Đã gửi doanh thu thành công!'); // ← Đổi thông báo
+                document.querySelectorAll('#revenueSection input[type="text"]').forEach(input => input.value = '');
             } catch (error) {
                 console.error('Error:', error);
                 alert('❌ Có lỗi khi lưu dữ liệu: ' + error.message);
@@ -1537,115 +1559,152 @@ _Hệ thống quản lý Pizza_`;
             const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
             try {
-                const { data, error } = await supabase
+                // Lấy bản ghi mới nhất của hôm qua
+                const { data: yesterdayData, error: yError } = await supabase
                     .from('ton_quan')
-                    .select('store_id, date, inventory')
+                    .select('inventory')
                     .eq('store_id', currentStore)
-                    .order('date', { ascending: true });
+                    .eq('date', yesterday)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
 
-                if (error) throw error;
+                if (yError) throw yError;
 
-                // 🔹 Chuyển timestamp sang dạng yyyy-mm-dd để so sánh
-                const normalizeDate = d => new Date(d).toISOString().split('T')[0];
+                // Lấy bản ghi mới nhất của hôm nay
+                const { data: todayData, error: tError } = await supabase
+                    .from('ton_quan')
+                    .select('inventory')
+                    .eq('store_id', currentStore)
+                    .eq('date', today)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
 
-                const yesterdayData = data.find(row => normalizeDate(row.date) === yesterday);
-                const todayData = data.find(row => normalizeDate(row.date) === today);
+                if (tError) throw tError;
 
-                const yesterdayInv = yesterdayData ? yesterdayData.inventory : {};
-                const todayInv = todayData ? todayData.inventory : {};
+                const yesterdayInv = yesterdayData?.[0]?.inventory || {};
+                const todayInv = todayData?.[0]?.inventory || {};
 
                 document.getElementById('baseLYesterday').value = yesterdayInv['Đế L'] || 0;
                 document.getElementById('baseSYesterday').value = yesterdayInv['Đế S'] || 0;
                 document.getElementById('baseLToday').value = todayInv['Đế L'] || 0;
                 document.getElementById('baseSToday').value = todayInv['Đế S'] || 0;
 
-                console.log("✅ Dữ liệu hôm qua:", yesterdayInv);
-                console.log("✅ Dữ liệu hôm nay:", todayInv);
+                console.log("✅ Dữ liệu hôm qua (mới nhất):", yesterdayInv);
+                console.log("✅ Dữ liệu hôm nay (mới nhất):", todayInv);
 
             } catch (err) {
                 console.error('Lỗi khi tải tồn kho:', err);
                 alert('⚠️ Không thể tải dữ liệu tồn kho. Vui lòng kiểm tra kết nối.');
             }
         }
-
                 
         
         // Kiểm tra bánh
-        async function checkCake() {
-            // 1) Lấy tồn hôm qua & hôm nay từ ton_quan (như loadTonQuan)
-            const today = new Date().toISOString().split('T')[0];
-            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        // Thêm helper function ở đầu
+function parseIntSafe(value) {
+    const num = parseInt(value);
+    return isNaN(num) ? 0 : num;
+}
 
-            // nếu bạn đã gọi loadTonQuan() khi mở tab thì có thể skip query — mình để an toàn gọi lại
-            let LYesterday = 0, SYesterday = 0, LToday = 0, SToday = 0;
-            try {
-                const { data, error } = await supabase
-                    .from('ton_quan')
-                    .select('date, inventory')
-                    .eq('store_id', currentStore)
-                    .order('date', { ascending: true });
+async function checkCake() {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-                if (error) throw error;
+    let LYesterday = 0, SYesterday = 0, LToday = 0, SToday = 0;
 
-                const normalizeDate = d => new Date(d).toISOString().split('T')[0];
-                const yesterdayData = data.find(row => normalizeDate(row.date) === yesterday);
-                const todayData = data.find(row => normalizeDate(row.date) === today);
+    try {
+        // 🔹 Lấy bản mới nhất của HÔM QUA
+        const { data: yData, error: yError } = await supabase
+            .from('ton_quan')
+            .select('inventory, created_at')
+            .eq('store_id', currentStore)
+            .eq('date', yesterday)
+            .order('created_at', { ascending: false })
+            .limit(1);
 
-                const yesterdayInv = yesterdayData ? yesterdayData.inventory : {};
-                const todayInv = todayData ? todayData.inventory : {};
+        if (yError) throw yError;
+        const yesterdayInv = yData?.[0]?.inventory || {};
+        LYesterday = parseIntSafe(yesterdayInv['Đế L']);
+        SYesterday = parseIntSafe(yesterdayInv['Đế S']);
 
-                LYesterday = yesterdayInv['Đế L'] || 0;
-                SYesterday = yesterdayInv['Đế S'] || 0;
-                LToday = todayInv['Đế L'] || 0;
-                SToday = todayInv['Đế S'] || 0;
-            } catch (err) {
-                console.warn('Không lấy được ton_quan tự động, dùng giá trị trên form nếu có', err);
-                // nếu không lấy được từ DB thì fallback: đọc từ input (nếu bạn vẫn có input)
-                LYesterday = parseInt(document.getElementById('baseLYesterday')?.value) || 0;
-                SYesterday = parseInt(document.getElementById('baseSYesterday')?.value) || 0;
-                LToday = parseInt(document.getElementById('baseLToday')?.value) || 0;
-                SToday = parseInt(document.getElementById('baseSToday')?.value) || 0;
-            }
+        // 🔹 Lấy bản mới nhất của HÔM NAY
+        const { data: tData, error: tError } = await supabase
+            .from('ton_quan')
+            .select('inventory, created_at')
+            .eq('store_id', currentStore)
+            .eq('date', today)
+            .order('created_at', { ascending: false, nullsFirst: false })
+            .limit(1);
 
-            // 2) Lấy các giá trị do người kiểm nhập (mang ra, bỏ, máy bán)
-            const LOut = parseInt(document.getElementById('baseLOut')?.value) || 0;
-            const SOut = parseInt(document.getElementById('baseSOut')?.value) || 0;
-            const LDiscard = parseInt(document.getElementById('baseLDiscard')?.value) || 0;
-            const SDiscard = parseInt(document.getElementById('baseSDiscard')?.value) || 0;
-            const LMachine = parseInt(document.getElementById('baseLMachine')?.value) || 0;
-            const SMachine = parseInt(document.getElementById('baseSMachine')?.value) || 0;
+        if (tError) throw tError;
 
-            // 3) Tính số lượng thực tế bán (theo công thức của bạn)
-            // Thực tế bán = (hôm qua) - (hôm nay) + (mang ra) - (bỏ)
-            const LActual = LYesterday - LToday + LOut - LDiscard;
-            const SActual = SYesterday - SToday + SOut - SDiscard;
-
-            // 4) So sánh theo diff = thực tế - máy (dấu đúng)
-            const LDiff = LActual - LMachine;
-            const SDiff = SActual - SMachine;
-
-            // 5) Tạo thông báo dễ hiểu
-            function makeLine(label, actual, machine, diff) {
-                if (diff === 0) {
-                    return `<p>👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:green">✅ Đủ</span></p>`;
-                } else if (diff > 0) {
-                    return `<p>👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:crimson">⚠️ Thiếu ${diff}</span></p>`;
-                } else {
-                    return `<p>👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:blue">✅ Dư ${-diff}</span></p>`;
-                }
-            }
-
-            const resultText = `
-                <p>📅 Hôm qua: Đế L=${LYesterday}, Đế S=${SYesterday} | Hôm nay: Đế L=${LToday}, Đế S=${SToday}</p>
-                ${makeLine('Đế L', LActual, LMachine, LDiff)}
-                ${makeLine('Đế S', SActual, SMachine, SDiff)}
-            `;
-            document.getElementById('cakeResult').innerHTML = resultText;
-
-            // debug logs (tiện để kiểm tra)
-            console.log({LYesterday, LToday, LOut, LDiscard, LActual, LMachine, LDiff});
-            console.log({SYesterday, SToday, SOut, SDiscard, SActual, SMachine, SDiff});
+        if (tData && tData.length > 0) {
+            const todayInv = tData[0].inventory || {};
+            console.log('✅ Lấy bản hôm nay mới nhất:', tData[0].created_at);
+            
+            LToday = parseIntSafe(todayInv['Đế L']);
+            SToday = parseIntSafe(todayInv['Đế S']);
+        } else {
+            console.warn('⚠️ Không tìm thấy bản ghi ton_quan hôm nay, lấy từ form input');
+            LToday = parseIntSafe(document.getElementById('baseLToday')?.value);
+            SToday = parseIntSafe(document.getElementById('baseSToday')?.value);
         }
+
+        // ⚡ Nếu window.baseLToday/baseSToday có dữ liệu từ renderOrderList, ưu tiên dùng
+        if (window.baseLToday !== undefined && window.baseSToday !== undefined) {
+            LToday = parseIntSafe(window.baseLToday.value || window.baseLToday);
+            SToday = parseIntSafe(window.baseSToday.value || window.baseSToday);
+            console.log('✅ Override bằng dữ liệu từ renderOrderList:', { LToday, SToday });
+        }
+
+    } catch (err) {
+        console.warn('⚠️ Lỗi khi lấy ton_quan, fallback sang form input', err);
+        LYesterday = parseIntSafe(document.getElementById('baseLYesterday')?.value);
+        SYesterday = parseIntSafe(document.getElementById('baseSYesterday')?.value);
+        LToday = parseIntSafe(document.getElementById('baseLToday')?.value);
+        SToday = parseIntSafe(document.getElementById('baseSToday')?.value);
+    }
+
+    // 2️⃣ Lấy các giá trị người nhập
+    const LOut = parseIntSafe(document.getElementById('baseLOut')?.value);
+    const SOut = parseIntSafe(document.getElementById('baseSOut')?.value);
+    const LDiscard = parseIntSafe(document.getElementById('baseLDiscard')?.value);
+    const SDiscard = parseIntSafe(document.getElementById('baseSDiscard')?.value);
+    const LMachine = parseIntSafe(document.getElementById('baseLMachine')?.value);
+    const SMachine = parseIntSafe(document.getElementById('baseSMachine')?.value);
+
+    console.log('📦 Dữ liệu tồn kho sau khi xử lý:', {
+        LYesterday, SYesterday, LToday, SToday,
+        LOut, SOut, LDiscard, SDiscard, LMachine, SMachine
+    });
+
+
+                // 3️⃣ Tính toán
+                const LActual = LYesterday - LToday + LOut - LDiscard;
+                const SActual = SYesterday - SToday + SOut - SDiscard;
+                const LDiff = LActual - LMachine;
+                const SDiff = SActual - SMachine;
+
+                // 4️⃣ Hiển thị kết quả
+                function makeLine(label, actual, machine, diff) {
+                    if (diff === 0) {
+                        return `<p>👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:green">✅ Đủ</span></p>`;
+                    } else if (diff > 0) {
+                        return `<p>👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:crimson">⚠️ Thiếu ${diff}</span></p>`;
+                    } else {
+                        return `<p>👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:blue">✅ Dư ${-diff}</span></p>`;
+                    }
+                }
+
+                const resultText = `
+                    <p>📅 Hôm qua: Đế L=${LYesterday}, Đế S=${SYesterday} | Hôm nay: Đế L=${LToday}, Đế S=${SToday}</p>
+                    ${makeLine('Đế L', LActual, LMachine, LDiff)}
+                    ${makeLine('Đế S', SActual, SMachine, SDiff)}
+                `;
+                document.getElementById('cakeResult').innerHTML = resultText;
+
+                console.log('✅ Kết quả cuối cùng:', {LActual, SActual, LDiff, SDiff});
+            }
 
     </script>
 </body>
