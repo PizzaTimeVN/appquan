@@ -1206,6 +1206,7 @@
         }
 
         // Đặt hàng function
+        let sortedItemNames = []; // Thêm biến toàn cục để lưu thứ tự
 
         async function renderOrderList() {
             const container = document.getElementById('orderList');
@@ -1235,6 +1236,9 @@
                 container.innerHTML = '';
 
                 const sortedItems = Object.entries(inventoryData).sort((a, b) => a[1] - b[1]);
+                
+                // Lưu thứ tự tên item để dùng khi save
+                sortedItemNames = sortedItems.map(([name]) => name);
 
                 for (const [item, stock] of sortedItems) {
                     const isLowStock = stock < 3;
@@ -1259,63 +1263,10 @@
             }
         }
 
-        // Revenue functions
-        function formatNumberInput(input) {
-            input.addEventListener('input', () => {
-                let value = input.value.replace(/[^0-9]/g, '');
-                if (value) {
-                    input.value = parseInt(value).toLocaleString('vi-VN');
-                } else {
-                    input.value = '';
-                }
-            });
-        }
-
-        ['cashRevenue', 'transferRevenue', 'grabRevenue', 'shopeeRevenue'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) formatNumberInput(el);
-        });
-
-                async function saveRevenue() {
-            const revenueDate = document.getElementById('revenueDate')?.value;
-            
-            if (!revenueDate) {
-                alert('⚠️ Vui lòng chọn ngày bán!');
-                return;
-            }
-
-            const cash = parseFloat(document.getElementById('cashRevenue').value.replace(/\./g, '')) || 0;
-            const transfer = parseFloat(document.getElementById('transferRevenue').value.replace(/\./g, '')) || 0;
-            const grab = parseFloat(document.getElementById('grabRevenue').value.replace(/\./g, '')) || 0;
-            const shopee = parseFloat(document.getElementById('shopeeRevenue').value.replace(/\./g, '')) || 0;
-
-            const data = {
-                store_id: currentStore,
-                username: currentUser,
-                date: revenueDate, // ← Lưu ngày người dùng chọn
-                cash_revenue: cash,
-                transfer_revenue: transfer,
-                grab_revenue: grab,
-                shopee_revenue: shopee,
-                total_revenue: cash + transfer + grab + shopee,
-                created_at: new Date().toISOString()
-            };
-
-            try {
-                const { error } = await supabase.from('sale_quan').insert([data]).select();
-                if (error) throw error;
-                alert('✅ Đã gửi doanh thu thành công!'); // ← Đổi thông báo
-                document.querySelectorAll('#revenueSection input[type="text"]').forEach(input => input.value = '');
-            } catch (error) {
-                console.error('Error:', error);
-                alert('❌ Có lỗi khi lưu dữ liệu: ' + error.message);
-            }
-        }
-
         async function saveOrder() {
             const orderItems = [];
             const inputs = document.querySelectorAll('#orderList .order-item input');
-            const items = Object.keys(inventoryData);
+            const items = sortedItemNames;
 
             inputs.forEach((input, index) => {
                 const quantity = parseInt(input.value) || 0;
@@ -1404,6 +1355,61 @@ _Hệ thống quản lý Pizza_`;
             }
         }
 
+
+        // Revenue functions
+        function formatNumberInput(input) {
+            input.addEventListener('input', () => {
+                let value = input.value.replace(/[^0-9]/g, '');
+                if (value) {
+                    input.value = parseInt(value).toLocaleString('vi-VN');
+                } else {
+                    input.value = '';
+                }
+            });
+        }
+
+        ['cashRevenue', 'transferRevenue', 'grabRevenue', 'shopeeRevenue'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) formatNumberInput(el);
+        });
+
+                async function saveRevenue() {
+            const revenueDate = document.getElementById('revenueDate')?.value;
+            
+            if (!revenueDate) {
+                alert('⚠️ Vui lòng chọn ngày bán!');
+                return;
+            }
+
+            const cash = parseFloat(document.getElementById('cashRevenue').value.replace(/\./g, '')) || 0;
+            const transfer = parseFloat(document.getElementById('transferRevenue').value.replace(/\./g, '')) || 0;
+            const grab = parseFloat(document.getElementById('grabRevenue').value.replace(/\./g, '')) || 0;
+            const shopee = parseFloat(document.getElementById('shopeeRevenue').value.replace(/\./g, '')) || 0;
+
+            const data = {
+                store_id: currentStore,
+                username: currentUser,
+                date: revenueDate, // ← Lưu ngày người dùng chọn
+                cash_revenue: cash,
+                transfer_revenue: transfer,
+                grab_revenue: grab,
+                shopee_revenue: shopee,
+                total_revenue: cash + transfer + grab + shopee,
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                const { error } = await supabase.from('sale_quan').insert([data]).select();
+                if (error) throw error;
+                alert('✅ Đã gửi doanh thu thành công!'); // ← Đổi thông báo
+                document.querySelectorAll('#revenueSection input[type="text"]').forEach(input => input.value = '');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Có lỗi khi lưu dữ liệu: ' + error.message);
+            }
+        }
+
+        
         // Sales Tracker Functions
         function loadSalesCategories() {
             const categorySelect = document.getElementById('salesCategory');
