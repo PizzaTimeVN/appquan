@@ -634,75 +634,83 @@
                 <button class="btn save-btn" onclick="saveSalesData()">Lưu dữ liệu bán hàng</button>
             </div>
 
-            <!-- Check Cake Section -->
-                <div id="checkCakeSection" class="content-section" style="background-color: white;">
-                    <button class="btn back-btn" onclick="showMainMenu()">← Quay Lại</button>
-                    <h2 class="section-title">🧁 Check Bánh</h2>
+       <!-- Check Cake Section -->
+            <div id="checkCakeSection" class="content-section">
+                <button class="btn back-btn" onclick="showMainMenu()">← Quay Lại</button>
+                <h2 class="section-title">🧁 Check Bánh</h2>
 
-                    <div class="input-row">
-                        <div class="input-group-inline">
-                            <label for="cakeDate">📅 Ngày kiểm:</label>
-                            <input type="date" id="cakeDate">
-                        </div>
-                        <div class="input-group-inline">
-                            <label for="cakeUser">👤 Người kiểm:</label>
-                            <input type="text" id="cakeUser" placeholder="Nhập tên người kiểm bánh">
-                        </div>
+                <div class="input-row">
+                    <div class="input-group-inline">
+                        <label for="cakeDate">📅 Ngày kiểm:</label>
+                        <input type="date" id="cakeDate">
                     </div>
+                    <div class="input-group-inline">
+                        <label for="cakeUser">👤 Người kiểm:</label>
+                        <input type="text" id="cakeUser" placeholder="Nhập tên người kiểm bánh">
+                    </div>
+                </div>
 
-                    <h3>Số lượng đế hôm qua & hôm nay (tự động)</h3>
+                <h3 style="margin-top: 20px; margin-bottom: 15px;">Số lượng đế hôm qua & hôm nay (tự động)</h3>
                 <div class="revenue-grid">
                     <div class="revenue-item">
                         <label>Đế L hôm qua</label>
-                        <input type="number" id="baseLYesterday" placeholder="Tự lấy" min="0" readonly class="readonly-input">
+                        <input type="number" id="baseLYesterday" placeholder="Tự động lấy" min="0" readonly>
                     </div>
                     <div class="revenue-item">
                         <label>Đế S hôm qua</label>
-                        <input type="number" id="baseSYesterday" placeholder="Tự lấy" min="0" readonly class="readonly-input">
+                        <input type="number" id="baseSYesterday" placeholder="Tự động lấy" min="0" readonly>
                     </div>
                     <div class="revenue-item">
                         <label>Đế L hôm nay</label>
-                        <input type="number" id="baseLToday" placeholder="Tự lấy" min="0" readonly class="readonly-input">
+                        <input type="number" id="baseLToday" placeholder="Tự động lấy" min="0" readonly>
                     </div>
                     <div class="revenue-item">
                         <label>Đế S hôm nay</label>
-                        <input type="number" id="baseSToday" placeholder="Tự lấy" min="0" readonly class="readonly-input">
+                        <input type="number" id="baseSToday" placeholder="Tự động lấy" min="0" readonly>
                     </div>
                 </div>
 
-
-                    <h3>Nhập số lượng đế mang ra, bỏ, máy bán</h3>
-                    <div class="revenue-grid">
-                        <div class="revenue-item">
-                            <label>Đế L mang ra</label>
-                            <input type="number" id="baseLOut" placeholder="0" min="0">
-                        </div>
-                        <div class="revenue-item">
-                            <label>Đế S mang ra</label>
-                            <input type="number" id="baseSOut" placeholder="0" min="0">
-                        </div>
-                        <div class="revenue-item">
-                            <label>Đế L bỏ</label>
-                            <input type="number" id="baseLDiscard" placeholder="0" min="0">
-                        </div>
-                        <div class="revenue-item">
-                            <label>Đế S bỏ</label>
-                            <input type="number" id="baseSDiscard" placeholder="0" min="0">
-                        </div>
-                        <div class="revenue-item">
-                            <label>Đế L máy bán</label>
-                            <input type="number" id="baseLMachine" placeholder="0" min="0">
-                        </div>
-                        <div class="revenue-item">
-                            <label>Đế S máy bán</label>
-                            <input type="number" id="baseSMachine" placeholder="0" min="0">
-                        </div>
+                <h3 style="margin-top: 30px; margin-bottom: 15px;">Số lượng mang ra (tự động)</h3>
+                <div class="revenue-grid">
+                    <div class="revenue-item">
+                        <label>Đế L mang ra</label>
+                        <input type="number" id="baseLOut" placeholder="Tự động lấy" min="0" readonly>
                     </div>
-
-                    <button class="btn save-btn" onclick="checkCake()">🔍 Kiểm Tra Kết Quả</button>
-
-                    <div id="cakeResult" class="result-box" style="margin-top: 20px; font-size: 18px; font-weight: bold;"></div>
+                    <div class="revenue-item">
+                        <label>Đế S mang ra</label>
+                        <input type="number" id="baseSOut" placeholder="Tự động lấy" min="0" readonly>
+                    </div>
                 </div>
+
+                <h3 style="margin-top: 30px; margin-bottom: 15px;">Nhập số lượng đế bỏ & máy bán</h3>
+                <div class="revenue-grid">
+                    <div class="revenue-item">
+                        <label>Đế L bỏ</label>
+                        <input type="number" id="baseLDiscard" placeholder="0" min="0" value="0">
+                    </div>
+                    <div class="revenue-item">
+                        <label>Đế S bỏ</label>
+                        <input type="number" id="baseSDiscard" placeholder="0" min="0" value="0">
+                    </div>
+                    <div class="revenue-item">
+                        <label>Đế L máy bán</label>
+                        <input type="number" id="baseLMachine" placeholder="0" min="0" value="0">
+                    </div>
+                    <div class="revenue-item">
+                        <label>Đế S máy bán</label>
+                        <input type="number" id="baseSMachine" placeholder="0" min="0" value="0">
+                    </div>
+                </div>
+
+                <button class="btn save-btn" onclick="checkCake()">🔍 Kiểm Tra Kết Quả</button>
+
+                <div id="cakeResult" class="result-box" style="margin-top: 20px; display: none;"></div>
+
+                <!-- Nút gửi Discord - hiện sau khi kiểm tra -->
+                <button class="btn save-btn" onclick="sendCakeResultToDiscord()" id="sendDiscordBtn" style="display:none; margin-top: 15px; background-color: #5865F2;">
+                    📤 Gửi Kết Quả 
+                </button>
+            </div>
         </div>
     </div>
 
@@ -983,9 +991,11 @@
 
             // 🧁 Nếu mở tab Check Bánh → tự động load dữ liệu tồn hôm qua & hôm nay
             if (section === 'checkCake') {
-                loadTonQuan(); // gọi hàm lấy dữ liệu từ bảng ton_quan
+                loadAllCakeData();
                 const cakeDate = document.getElementById('cakeDate');
                 if (cakeDate) cakeDate.value = new Date().toISOString().split('T')[0];
+                const cakeUser = document.getElementById('cakeUser');
+                if (cakeUser) cakeUser.value = currentUser;
             }
 
             // 📦 Nếu mở tab Kiểm hàng → gán ngày & người kiểm
@@ -1605,113 +1615,246 @@ _Hệ thống quản lý Pizza_`;
         }
                 
         
+       // Helper function
+        function parseIntSafe(value) {
+            const num = parseInt(value);
+            return isNaN(num) ? 0 : num;
+        }
+
+        // Load all data for check cake
+        async function loadAllCakeData() {
+            await loadTonQuan();
+            await loadExportsData();
+        }
+
+        // Load tồn kho từ bảng ton_quan
+        async function loadTonQuan() {
+            const today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+            try {
+                // Lấy bản ghi mới nhất của hôm qua
+                const { data: yesterdayData, error: yError } = await supabase
+                    .from('ton_quan')
+                    .select('inventory')
+                    .eq('store_id', currentStore)
+                    .eq('date', yesterday)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                if (yError) throw yError;
+
+                // Lấy bản ghi mới nhất của hôm nay
+                const { data: todayData, error: tError } = await supabase
+                    .from('ton_quan')
+                    .select('inventory')
+                    .eq('store_id', currentStore)
+                    .eq('date', today)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                if (tError) throw tError;
+
+                const yesterdayInv = yesterdayData?.[0]?.inventory || {};
+                const todayInv = todayData?.[0]?.inventory || {};
+
+                document.getElementById('baseLYesterday').value = yesterdayInv['Đế L'] || 0;
+                document.getElementById('baseSYesterday').value = yesterdayInv['Đế S'] || 0;
+                document.getElementById('baseLToday').value = todayInv['Đế L'] || 0;
+                document.getElementById('baseSToday').value = todayInv['Đế S'] || 0;
+
+                console.log("✅ Dữ liệu tồn kho:", { yesterdayInv, todayInv });
+
+            } catch (err) {
+                console.error('❌ Lỗi khi tải tồn kho:', err);
+                alert('⚠️ Không thể tải dữ liệu tồn kho từ ton_quan');
+            }
+        }
+
+        // Load số lượng mang ra từ bảng exports (lấy bản ghi mới nhất)
+        async function loadExportsData() {
+            const today = new Date().toISOString().split('T')[0];
+
+            try {
+                // Lấy bản ghi mới nhất của Đế L
+                const { data: dataL, error: errorL } = await supabase
+                    .from('exports')
+                    .select('item, quantity, created_at')
+                    .eq('store', currentStore)
+                    .eq('date', today)
+                    .eq('item', 'Đế L')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                if (errorL) throw errorL;
+
+                // Lấy bản ghi mới nhất của Đế S
+                const { data: dataS, error: errorS } = await supabase
+                    .from('exports')
+                    .select('item, quantity, created_at')
+                    .eq('store', currentStore)
+                    .eq('date', today)
+                    .eq('item', 'Đế S')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                if (errorS) throw errorS;
+
+                console.log("📦 Dữ liệu exports mới nhất:", { dataL, dataS });
+
+                // Lấy số lượng từ bản ghi mới nhất
+                const qtyL = dataL?.[0] ? Math.abs(parseIntSafe(dataL[0].quantity)) : 0;
+                const qtyS = dataS?.[0] ? Math.abs(parseIntSafe(dataS[0].quantity)) : 0;
+
+                document.getElementById('baseLOut').value = qtyL;
+                document.getElementById('baseSOut').value = qtyS;
+
+                console.log("✅ Mang ra (bản ghi mới nhất) - Đế L:", qtyL, "| Đế S:", qtyS);
+
+            } catch (err) {
+                console.error('❌ Lỗi khi tải exports:', err);
+                alert('⚠️ Không thể tải dữ liệu mang ra từ bảng exports');
+            }
+        }
+
         // Kiểm tra bánh
-        // Thêm helper function ở đầu
-function parseIntSafe(value) {
-    const num = parseInt(value);
-    return isNaN(num) ? 0 : num;
-}
-
-async function checkCake() {
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-
-    let LYesterday = 0, SYesterday = 0, LToday = 0, SToday = 0;
-
-    try {
-        // 🔹 Lấy bản mới nhất của HÔM QUA
-        const { data: yData, error: yError } = await supabase
-            .from('ton_quan')
-            .select('inventory, created_at')
-            .eq('store_id', currentStore)
-            .eq('date', yesterday)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-        if (yError) throw yError;
-        const yesterdayInv = yData?.[0]?.inventory || {};
-        LYesterday = parseIntSafe(yesterdayInv['Đế L']);
-        SYesterday = parseIntSafe(yesterdayInv['Đế S']);
-
-        // 🔹 Lấy bản mới nhất của HÔM NAY
-        const { data: tData, error: tError } = await supabase
-            .from('ton_quan')
-            .select('inventory, created_at')
-            .eq('store_id', currentStore)
-            .eq('date', today)
-            .order('created_at', { ascending: false, nullsFirst: false })
-            .limit(1);
-
-        if (tError) throw tError;
-
-        if (tData && tData.length > 0) {
-            const todayInv = tData[0].inventory || {};
-            console.log('✅ Lấy bản hôm nay mới nhất:', tData[0].created_at);
+        async function checkCake() {
+            const today = new Date().toISOString().split('T')[0];
             
-            LToday = parseIntSafe(todayInv['Đế L']);
-            SToday = parseIntSafe(todayInv['Đế S']);
-        } else {
-            console.warn('⚠️ Không tìm thấy bản ghi ton_quan hôm nay, lấy từ form input');
-            LToday = parseIntSafe(document.getElementById('baseLToday')?.value);
-            SToday = parseIntSafe(document.getElementById('baseSToday')?.value);
-        }
+            // Lấy dữ liệu từ form
+            const LYesterday = parseIntSafe(document.getElementById('baseLYesterday').value);
+            const SYesterday = parseIntSafe(document.getElementById('baseSYesterday').value);
+            const LToday = parseIntSafe(document.getElementById('baseLToday').value);
+            const SToday = parseIntSafe(document.getElementById('baseSToday').value);
+            const LOut = parseIntSafe(document.getElementById('baseLOut').value);
+            const SOut = parseIntSafe(document.getElementById('baseSOut').value);
+            const LDiscard = parseIntSafe(document.getElementById('baseLDiscard').value);
+            const SDiscard = parseIntSafe(document.getElementById('baseSDiscard').value);
+            const LMachine = parseIntSafe(document.getElementById('baseLMachine').value);
+            const SMachine = parseIntSafe(document.getElementById('baseSMachine').value);
 
-        // ⚡ Nếu window.baseLToday/baseSToday có dữ liệu từ renderOrderList, ưu tiên dùng
-        if (window.baseLToday !== undefined && window.baseSToday !== undefined) {
-            LToday = parseIntSafe(window.baseLToday.value || window.baseLToday);
-            SToday = parseIntSafe(window.baseSToday.value || window.baseSToday);
-            console.log('✅ Override bằng dữ liệu từ renderOrderList:', { LToday, SToday });
-        }
+            console.log('📊 Dữ liệu check bánh:', {
+                LYesterday, SYesterday, LToday, SToday,
+                LOut, SOut, LDiscard, SDiscard, LMachine, SMachine
+            });
 
-    } catch (err) {
-        console.warn('⚠️ Lỗi khi lấy ton_quan, fallback sang form input', err);
-        LYesterday = parseIntSafe(document.getElementById('baseLYesterday')?.value);
-        SYesterday = parseIntSafe(document.getElementById('baseSYesterday')?.value);
-        LToday = parseIntSafe(document.getElementById('baseLToday')?.value);
-        SToday = parseIntSafe(document.getElementById('baseSToday')?.value);
-    }
+            // Tính toán
+            const LActual = LYesterday - LToday + LOut - LDiscard;
+            const SActual = SYesterday - SToday + SOut - SDiscard;
+            const LDiff = LActual - LMachine;
+            const SDiff = SActual - SMachine;
 
-    // 2️⃣ Lấy các giá trị người nhập
-    const LOut = parseIntSafe(document.getElementById('baseLOut')?.value);
-    const SOut = parseIntSafe(document.getElementById('baseSOut')?.value);
-    const LDiscard = parseIntSafe(document.getElementById('baseLDiscard')?.value);
-    const SDiscard = parseIntSafe(document.getElementById('baseSDiscard')?.value);
-    const LMachine = parseIntSafe(document.getElementById('baseLMachine')?.value);
-    const SMachine = parseIntSafe(document.getElementById('baseSMachine')?.value);
-
-    console.log('📦 Dữ liệu tồn kho sau khi xử lý:', {
-        LYesterday, SYesterday, LToday, SToday,
-        LOut, SOut, LDiscard, SDiscard, LMachine, SMachine
-    });
-
-
-                // 3️⃣ Tính toán
-                const LActual = LYesterday - LToday + LOut - LDiscard;
-                const SActual = SYesterday - SToday + SOut - SDiscard;
-                const LDiff = LActual - LMachine;
-                const SDiff = SActual - SMachine;
-
-                // 4️⃣ Hiển thị kết quả
-                function makeLine(label, actual, machine, diff) {
-                    if (diff === 0) {
-                        return `<p>👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:green">✅ Đủ</span></p>`;
-                    } else if (diff > 0) {
-                        return `<p>👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:crimson">⚠️ Thiếu ${diff}</span></p>`;
-                    } else {
-                        return `<p>👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:blue">✅ Dư ${-diff}</span></p>`;
-                    }
+            // Hiển thị kết quả
+            function makeLine(label, actual, machine, diff) {
+                if (diff === 0) {
+                    return `<p style="font-size: 18px; margin: 10px 0;">👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:green; font-weight: bold;">✅ Đủ</span></p>`;
+                } else if (diff > 0) {
+                    return `<p style="font-size: 18px; margin: 10px 0;">👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:crimson; font-weight: bold;">⚠️ Thiếu ${diff}</span></p>`;
+                } else {
+                    return `<p style="font-size: 18px; margin: 10px 0;">👉 ${label} thực tế: <b>${actual}</b> | Máy báo: <b>${machine}</b> → <span style="color:blue; font-weight: bold;">✅ Dư ${-diff}</span></p>`;
                 }
-
-                const resultText = `
-                    <p>📅 Hôm qua: Đế L=${LYesterday}, Đế S=${SYesterday} | Hôm nay: Đế L=${LToday}, Đế S=${SToday}</p>
-                    ${makeLine('Đế L', LActual, LMachine, LDiff)}
-                    ${makeLine('Đế S', SActual, SMachine, SDiff)}
-                `;
-                document.getElementById('cakeResult').innerHTML = resultText;
-
-                console.log('✅ Kết quả cuối cùng:', {LActual, SActual, LDiff, SDiff});
             }
 
+            const resultText = `
+                <h3 style="margin-bottom: 15px; color: #667eea;">📋 Kết quả kiểm tra</h3>
+                <p style="font-size: 16px; color: #666; margin-bottom: 20px;">📅 Hôm qua: Đế L=${LYesterday}, Đế S=${SYesterday} | Hôm nay: Đế L=${LToday}, Đế S=${SToday}</p>
+                ${makeLine('Đế L', LActual, LMachine, LDiff)}
+                ${makeLine('Đế S', SActual, SMachine, SDiff)}
+            `;
+            
+            const resultDiv = document.getElementById('cakeResult');
+            resultDiv.innerHTML = resultText;
+            resultDiv.style.display = 'block';
+
+            // Lưu kết quả để gửi Discord
+            lastCakeCheckResult = {
+                date: today,
+                store: currentStore,
+                user: document.getElementById('cakeUser')?.value || 'Không rõ',
+                LYesterday, SYesterday, LToday, SToday,
+                LOut, SOut, LDiscard, SDiscard, LMachine, SMachine,
+                LActual, SActual, LDiff, SDiff
+            };
+
+            // Hiển thị nút gửi Discord
+            document.getElementById('sendDiscordBtn').style.display = 'block';
+
+            console.log('✅ Kết quả kiểm tra:', lastCakeCheckResult);
+        }
+
+        // Hàm gửi kết quả qua Discord
+        async function sendCakeResultToDiscord() {
+            if (!lastCakeCheckResult) {
+                alert('⚠️ Vui lòng kiểm tra bánh trước khi gửi!');
+                return;
+            }
+
+            const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1429805698413232238/GAygBOBeaQQfL_G9m4_KA-UZVJ3d62WFPTDpJaX-8PwxRe3shjrnwmCXRggKRkqUEz1S'; // Thay bằng webhook URL của bạn
+
+            const r = lastCakeCheckResult;
+            
+            const embedColor = (r.LDiff === 0 && r.SDiff === 0) ? 3066993 : // Green
+                            (r.LDiff > 0 || r.SDiff > 0) ? 15158332 : // Red
+                            3447003; // Blue
+
+            const discordPayload = {
+                embeds: [{
+                    title: '🧁 Kết Quả Kiểm Tra Bánh',
+                    color: embedColor,
+                    fields: [
+                        { name: '📅 Ngày', value: r.date, inline: true },
+                        { name: '🏪 Quán', value: r.store, inline: true },
+                        { name: '👤 Người kiểm', value: r.user, inline: true },
+                        { name: '\u200B', value: '\u200B' },
+                        { name: '📊 Số liệu hôm qua', value: `Đế L: ${r.LYesterday} | Đế S: ${r.SYesterday}`, inline: false },
+                        { name: '📊 Số liệu hôm nay', value: `Đế L: ${r.LToday} | Đế S: ${r.SToday}`, inline: false },
+                        { name: '📦 Mang ra', value: `Đế L: ${r.LOut} | Đế S: ${r.SOut}`, inline: false },
+                        { name: '🗑️ Bỏ đi', value: `Đế L: ${r.LDiscard} | Đế S: ${r.SDiscard}`, inline: false },
+                        { name: '🤖 Máy bán', value: `Đế L: ${r.LMachine} | Đế S: ${r.SMachine}`, inline: false },
+                        { name: '\u200B', value: '\u200B' },
+                        { 
+                            name: '🔍 Kết quả Đế L', 
+                            value: `Thực tế: **${r.LActual}** | Máy: **${r.LMachine}** → ${
+                                r.LDiff === 0 ? '✅ **Đủ**' : 
+                                r.LDiff > 0 ? `⚠️ **Thiếu ${r.LDiff}**` : 
+                                `✅ **Dư ${-r.LDiff}**`
+                            }`, 
+                            inline: false 
+                        },
+                        { 
+                            name: '🔍 Kết quả Đế S', 
+                            value: `Thực tế: **${r.SActual}** | Máy: **${r.SMachine}** → ${
+                                r.SDiff === 0 ? '✅ **Đủ**' : 
+                                r.SDiff > 0 ? `⚠️ **Thiếu ${r.SDiff}**` : 
+                                `✅ **Dư ${-r.SDiff}**`
+                            }`, 
+                            inline: false 
+                        }
+                    ],
+                    timestamp: new Date().toISOString(),
+                    footer: { text: 'Hệ thống quản lý bánh' }
+                }]
+            };
+
+            try {
+                const response = await fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(discordPayload)
+                });
+
+                if (response.ok) {
+                    alert('✅ Đã gửi kết quả thành công!');
+                    document.getElementById('sendDiscordBtn').style.display = 'none';
+                    lastCakeCheckResult = null; // Reset sau khi gửi
+                } else {
+                    throw new Error('Discord webhook failed');
+                }
+            } catch (err) {
+                console.error('❌ Lỗi gửi Discord:', err);
+                alert('❌ Không thể gửi qua Discord. Vui lòng kiểm tra webhook URL!');
+            }
+        }
     </script>
 </body>
 </html>
