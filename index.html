@@ -453,6 +453,128 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Task reminder styles */
+            .task-session {
+                margin-bottom: 30px;
+                border: 2px solid #e0e0e0;
+                border-radius: 12px;
+                overflow: hidden;
+            }
+
+            .task-session-header {
+                padding: 15px 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                font-weight: 600;
+                font-size: 18px;
+            }
+
+            .task-list {
+                padding: 20px;
+                background: #fafafa;
+            }
+
+            .task-item {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 12px 15px;
+                background: white;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                transition: all 0.2s;
+            }
+
+            .task-item:hover {
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+
+            .task-checkbox {
+                width: 22px;
+                height: 22px;
+                cursor: pointer;
+                flex-shrink: 0;
+                accent-color: #667eea;
+            }
+
+            .task-text {
+                font-size: 15px;
+                flex: 1;
+                color: #333;
+            }
+
+            .task-text.completed {
+                text-decoration: line-through;
+                color: #999;
+            }
+
+            .person-section {
+                padding: 20px;
+                background: white;
+                border-top: 2px solid #e0e0e0;
+            }
+
+            .person-label {
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 10px;
+                color: #555;
+            }
+
+            .person-input {
+                width: 100%;
+                padding: 12px 15px;
+                border: 2px solid #e0e0e0;
+                border-radius: 10px;
+                font-size: 15px;
+            }
+
+            .person-input:focus {
+                outline: none;
+                border-color: #667eea;
+            }
+
+            .task-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin-top: 25px;
+            }
+
+            .btn-discord {
+                background: #5865F2;
+            }
+
+            .btn-reset {
+                background: #28a745;
+            }
+
+            .status-toast {
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                background: #2c3e50;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: 500;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                animation: slideIn 0.3s ease;
+                z-index: 1000;
+            }
+
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
     </style>
 </head>
 <body>
@@ -463,7 +585,15 @@
                 <h2>🍕 Quản Lý Pizza</h2>
                 <form id="loginForm">
                     <div class="form-group">
-                        <label>Chọn Quán</label>
+                        <label>Tên Đăng Nhập</label>
+                        <input type="text" id="username" required placeholder="Nhập tên đăng nhập">
+                    </div>
+                    <div class="form-group">
+                        <label>Mật Khẩu</label>
+                        <input type="password" id="password" required placeholder="Nhập mật khẩu">
+                    </div>
+                    <div class="form-group">
+                        <label>Chọn Quán Làm Việc</label>
                         <select id="storeSelect" required>
                             <option value="">-- Chọn quán --</option>
                             <option value="DH">DH</option>
@@ -472,19 +602,10 @@
                             <option value="PY">PY</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Tên Đăng Nhập</label>
-                        <input type="text" id="username" required placeholder="Nhập tên đăng nhập">
-                    </div>
-                    <div class="form-group">
-                        <label>Mật Khẩu</label>
-                        <input type="password" id="password" required placeholder="Nhập mật khẩu">
-                    </div>
                     <button type="submit" class="btn">Đăng Nhập</button>
                 </form>
             </div>
         </div>
-
         <!-- Main App Screen -->
         <div id="appScreen" class="hidden">
             <div class="header">
@@ -518,6 +639,11 @@
                         <h3>🧁 Check Bánh</h3>
                         <p>Kiểm tra số lượng bánh bán thực tế</p>
                     </div>
+                    <div class="tab-card" onclick="showSection('taskReminder')">
+                        <h3>📋 Nhắc Việc</h3>
+                        <p>Quản lý công việc ca sáng & chiều</p>
+                    </div>
+
                 </div>
             </div>
 
@@ -711,6 +837,37 @@
                     📤 Gửi Kết Quả 
                 </button>
             </div>
+            <!-- Task Reminder Section -->
+            <div id="taskReminderSection" class="content-section">
+                <button class="btn back-btn" onclick="showMainMenu()">← Quay Lại</button>
+                <h2 class="section-title">📋 Nhắc Việc</h2>
+
+                <!-- Ca Sáng -->
+                <div class="task-session">
+                    <div class="task-session-header">☀️ CA SÁNG (14:00)</div>
+                    <div class="task-list" id="morningTaskList"></div>
+                    <div class="person-section">
+                        <div class="person-label">Người làm ca sáng:</div>
+                        <input type="text" class="person-input" id="morningPerson" placeholder="Nhập tên...">
+                    </div>
+                </div>
+
+                <!-- Ca Chiều -->
+                <div class="task-session">
+                    <div class="task-session-header">🌤️ CA CHIỀU (17:00)</div>
+                    <div class="task-list" id="afternoonTaskList"></div>
+                    <div class="person-section">
+                        <div class="person-label">Người làm ca chiều:</div>
+                        <input type="text" class="person-input" id="afternoonPerson" placeholder="Nhập tên...">
+                    </div>
+                </div>
+
+                <div class="task-actions">
+                    <button class="btn btn-discord" onclick="sendTasksToDiscord()">📤 Gửi </button>
+                    <button class="btn btn-reset" onclick="resetAllTasks()">🔄 Làm Mới</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -720,12 +877,51 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5dXVmand1dGF6amZ1aWF3aXVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MDk4OTIsImV4cCI6MjA3NjA4NTg5Mn0.8WEsb2tBD6akNA9h9tR9zIAqjkZz0xZYVNbYCx2dEbc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Discord Webhook for Tasks
+        const TASK_WEBHOOK_URL = 'https://discord.com/api/webhooks/1434581338786234388/YLq7OJfqS0_UBqTvY_bGbXdUKZgKXgbK3Mc9neAVTwBUfZZBgL4Eno6G5kUJRF87X7zm';
+
+        // Task definitions
+        const TASKS = {
+            morning: [
+                'Chuẩn bị đồ đạc',
+                'Vệ sinh lò',
+                'Quét sân',
+                'Sạc điện thoại',
+                'Cắt rau củ',
+                'Làm Salad',
+                'Nhập hàng',
+                'Lau tủ lạnh',
+                'Chà nhà vệ sinh'
+            ],
+            afternoon: [
+                'Quét sân',
+                'Mua rau củ thiếu',
+                'Order đồ thiếu',
+                'Sắp xếp lại bàn ghế',
+                'Gấp hộp'
+            ]
+        };
+
         // Login credentials
-        const CREDENTIALS = {
-            'DH': { username: 'DH258', password: '258DH' },
-            'NH': { username: 'NH141', password: '141NH' },
-            'HXH': { username: 'HXH01', password: '01HXH' },
-            'PY': { username: 'BT227', password: '227BT' }
+        // Login credentials - Danh sách nhân viên
+        const EMPLOYEES = {
+        'Le':     { password: 'xfgMyqK%',  name: 'Lê',     canAccessAll: false },
+        'Yen':    { password: 'miOdxPSD',  name: 'Yên',    canAccessAll: false },
+        'Kiet':   { password: '1zOYj6r^',  name: 'Kiệt',   canAccessAll: false },
+        'Tram':   { password: 'JOlqCw5?',  name: 'Trâm',   canAccessAll: false },
+        'Tien':   { password: 'r8K%uYRh',  name: 'Tiền',   canAccessAll: false },
+        'Thuy':   { password: 'o8jTq1OR',  name: 'Thủy',   canAccessAll: false },
+        'Linh':   { password: '$q8CCR3v',  name: 'Linh',   canAccessAll: false },
+        'Nguyen': { password: 'gxk0zYBq',  name: 'Nguyên', canAccessAll: false },
+        'Hang':   { password: 'ABcagR#V',  name: 'Hằng',   canAccessAll: false },
+        'Binh':   { password: 'udLFSqj8',  name: 'Bình',   canAccessAll: false },
+        'Phuong': { password: 'M&wLVngU',  name: 'Phương', canAccessAll: false },
+        'Quyen':  { password: 'CxI32zNU',  name: 'Quyên',  canAccessAll: false },
+        'Thinh':  { password: 'Oxv#LGij',  name: 'Thịnh',  canAccessAll: false },
+        'Minh':   { password: 'WJ73QA@2',  name: 'Minh',   canAccessAll: false },
+        'Van':    { password: '@QiU&Al0',  name: 'Vân',    canAccessAll: false },
+        'Bo':    { password: '123',  name: 'Bo',    canAccessAll: false },
+
         };
 
         const STORE_NAMES = {
@@ -737,7 +933,7 @@
 
         // Inventory categories
         const INVENTORY_CATEGORIES = {
-            'Làm bánh': [
+           'Làm bánh': [
                         'Đế L',
                         'Đế S',
                         'Phô Mai L',
@@ -918,6 +1114,7 @@
         const salesProducts = products;
 
         let currentUser = null;
+        let currentUsername = null;
         let currentStore = null;
         let inventoryData = {};
         let adjustments = [];
@@ -936,20 +1133,27 @@
         }
 
         // Login
+       // Login
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const store = document.getElementById('storeSelect').value;
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
+            const store = document.getElementById('storeSelect').value;
 
-            if (CREDENTIALS[store] && 
-                CREDENTIALS[store].username === username && 
-                CREDENTIALS[store].password === password) {
+            if (!store) {
+                alert('⚠️ Vui lòng chọn quán làm việc!');
+                return;
+            }
+
+            const employee = EMPLOYEES[username];
+            
+            if (employee && employee.password === password) {
                 currentStore = store;
-                currentUser = username;
+                currentUser = employee.name;
+                currentUsername = username;
                 showApp();
             } else {
-                alert('Sai tên đăng nhập hoặc mật khẩu!');
+                alert('❌ Sai tên đăng nhập hoặc mật khẩu!');
             }
         });
 
@@ -964,13 +1168,14 @@
                 day: 'numeric' 
             });
             
-            document.getElementById('storeName').textContent = STORE_NAMES[currentStore];
-            document.getElementById('userInfo').textContent = `${today} | Nhân viên: ${currentUser}`;
+            document.getElementById('storeName').textContent = `Quán ${STORE_NAMES[currentStore]}`;
+            document.getElementById('userInfo').textContent = `${today} | ${currentUser} (${currentUsername})`;
             
             initInventoryData();
             renderInventory();
             loadAdjustmentProducts();
             loadSalesCategories();
+            initializeTasks();
             
             const dateInput = document.getElementById('inventoryDate');
             if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
@@ -987,6 +1192,7 @@
                 document.getElementById('loginScreen').classList.remove('hidden');
                 document.getElementById('loginForm').reset();
                 currentUser = null;
+                currentUsername = null;
                 currentStore = null;
             }
         }
@@ -1047,7 +1253,14 @@
                 const revenueDate = document.getElementById('revenueDate');
                 if (revenueDate) revenueDate.value = new Date().toISOString().split('T')[0];
             }
+            
+            // 📊 Nếu mở tab Taskreminder → gán ngày hôm nay
+            if (section === 'taskReminder') {
+                initializeTasks();
+            }
         }
+
+
 
 
         // Inventory functions
@@ -1804,6 +2017,11 @@ _Hệ thống quản lý Pizza_`;
                 LOut, SOut, LDiscard, SDiscard, LMachine, SMachine,
                 LActual, SActual, LDiff, SDiff
             };
+            
+            let taskData = {
+                morning: [],
+                afternoon: []
+            };
 
             // Hiển thị nút gửi Discord
             document.getElementById('sendDiscordBtn').style.display = 'block';
@@ -1883,6 +2101,142 @@ _Hệ thống quản lý Pizza_`;
                 console.error('❌ Lỗi gửi Discord:', err);
                 alert('❌ Không thể gửi qua Discord. Vui lòng kiểm tra webhook URL!');
             }
+        }
+
+        // Task Reminder Functions
+        function initializeTasks() {
+            const storageKey = `taskData_${currentStore}`;
+            const saved = localStorage.getItem(storageKey);
+            
+            if (saved) {
+                const data = JSON.parse(saved);
+                taskData = data.tasks;
+                document.getElementById('morningPerson').value = data.persons.morning || '';
+                document.getElementById('afternoonPerson').value = data.persons.afternoon || '';
+            } else {
+                taskData = {
+                    morning: TASKS.morning.map(task => ({ task, completed: false })),
+                    afternoon: TASKS.afternoon.map(task => ({ task, completed: false }))
+                };
+            }
+
+            renderTasks();
+            setupTaskPersonInputs();
+        }
+
+        function renderTasks() {
+            ['morning', 'afternoon'].forEach(session => {
+                const container = document.getElementById(`${session}TaskList`);
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                taskData[session].forEach((item, index) => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = 'task-item';
+                    taskItem.innerHTML = `
+                        <input type="checkbox" class="task-checkbox" 
+                            ${item.completed ? 'checked' : ''} 
+                            onchange="toggleTask('${session}', ${index})">
+                        <span class="task-text ${item.completed ? 'completed' : ''}">${item.task}</span>
+                    `;
+                    container.appendChild(taskItem);
+                });
+            });
+        }
+
+        function setupTaskPersonInputs() {
+            const morning = document.getElementById('morningPerson');
+            const afternoon = document.getElementById('afternoonPerson');
+            if (morning) morning.addEventListener('input', saveTaskData);
+            if (afternoon) afternoon.addEventListener('input', saveTaskData);
+        }
+
+        function toggleTask(session, index) {
+            taskData[session][index].completed = !taskData[session][index].completed;
+            saveTaskData();
+            renderTasks();
+        }
+
+        function saveTaskData() {
+            const storageKey = `taskData_${currentStore}`;
+            const data = {
+                tasks: taskData,
+                persons: {
+                    morning: document.getElementById('morningPerson')?.value || '',
+                    afternoon: document.getElementById('afternoonPerson')?.value || ''
+                }
+            };
+            localStorage.setItem(storageKey, JSON.stringify(data));
+        }
+
+        async function sendTasksToDiscord() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString('vi-VN');
+
+            const morningPerson = document.getElementById('morningPerson')?.value || 'Chưa có tên';
+            const afternoonPerson = document.getElementById('afternoonPerson')?.value || 'Chưa có tên';
+
+            let message = `**📋 BÁO CÁO CÔNG VIỆC - ${STORE_NAMES[currentStore]}**\n`;
+            message += `**📅 ${dateStr} ${timeStr}**\n\n`;
+
+            message += `**☀️ CA SÁNG** - Người làm: ${morningPerson}\n`;
+            taskData.morning.forEach(item => {
+                const status = item.completed ? '✅' : '❌';
+                message += `${status} ${item.task}\n`;
+            });
+            message += '\n';
+
+            message += `**🌤️ CA CHIỀU** - Người làm: ${afternoonPerson}\n`;
+            taskData.afternoon.forEach(item => {
+                const status = item.completed ? '✅' : '❌';
+                message += `${status} ${item.task}\n`;
+            });
+
+            try {
+                const response = await fetch(TASK_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: message })
+                });
+
+                if (response.ok) {
+                    showStatusToast('✅ Đã gửi Discord thành công!');
+                } else {
+                    showStatusToast('❌ Lỗi gửi Discord!');
+                }
+            } catch (error) {
+                showStatusToast('❌ Không thể kết nối Discord!');
+                console.error(error);
+            }
+        }
+
+        function resetAllTasks() {
+            if (confirm('Làm mới tất cả công việc?')) {
+                taskData = {
+                    morning: TASKS.morning.map(task => ({ task, completed: false })),
+                    afternoon: TASKS.afternoon.map(task => ({ task, completed: false }))
+                };
+                const morning = document.getElementById('morningPerson');
+                const afternoon = document.getElementById('afternoonPerson');
+                if (morning) morning.value = '';
+                if (afternoon) afternoon.value = '';
+                saveTaskData();
+                renderTasks();
+                showStatusToast('✅ Đã làm mới!');
+            }
+        }
+
+        function showStatusToast(message) {
+            const existing = document.querySelector('.status-toast');
+            if (existing) existing.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = 'status-toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         }
     </script>
 </body>
