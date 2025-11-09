@@ -537,9 +537,10 @@
 
             .task-actions {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr;
                 gap: 15px;
                 margin-top: 25px;
+                padding: 0 20px 20px 20px;
             }
 
             .btn-discord {
@@ -848,8 +849,9 @@
                     <div class="task-list" id="morningTaskList"></div>
                     <div class="person-section">
                         <div class="person-label">Người làm ca sáng:</div>
-                        <input type="text" class="person-input" id="morningPerson" placeholder="Nhập tên...">
+                        <input type="text" class="person-input" id="morningPerson" placeholder="Tự động lấy" readonly>
                     </div>
+                    <button class="btn btn-discord" onclick="sendMorningTasksToDiscord()" style="margin: 15px 20px;">📤 Gửi Ca Sáng</button>
                 </div>
 
                 <!-- Ca Chiều -->
@@ -858,13 +860,13 @@
                     <div class="task-list" id="afternoonTaskList"></div>
                     <div class="person-section">
                         <div class="person-label">Người làm ca chiều:</div>
-                        <input type="text" class="person-input" id="afternoonPerson" placeholder="Nhập tên...">
+                        <input type="text" class="person-input" id="afternoonPerson" placeholder="Tự động lấy" readonly>
                     </div>
+                    <button class="btn btn-discord" onclick="sendAfternoonTasksToDiscord()" style="margin: 15px 20px;">📤 Gửi Ca Chiều</button>
                 </div>
 
                 <div class="task-actions">
-                    <button class="btn btn-discord" onclick="sendTasksToDiscord()">📤 Gửi </button>
-                    <button class="btn btn-reset" onclick="resetAllTasks()">🔄 Làm Mới</button>
+                    <button class="btn btn-reset" onclick="resetAllTasks()">🔄 Làm Mới Tất Cả</button>
                 </div>
             </div>
 
@@ -2104,21 +2106,23 @@ _Hệ thống quản lý Pizza_`;
         }
 
         // Task Reminder Functions
-        function initializeTasks() {
+       function initializeTasks() {
             const storageKey = `taskData_${currentStore}`;
             const saved = localStorage.getItem(storageKey);
             
             if (saved) {
                 const data = JSON.parse(saved);
                 taskData = data.tasks;
-                document.getElementById('morningPerson').value = data.persons.morning || '';
-                document.getElementById('afternoonPerson').value = data.persons.afternoon || '';
             } else {
                 taskData = {
                     morning: TASKS.morning.map(task => ({ task, completed: false })),
                     afternoon: TASKS.afternoon.map(task => ({ task, completed: false }))
                 };
             }
+
+            // Tự động điền tên người đăng nhập
+            document.getElementById('morningPerson').value = currentUser || '';
+            document.getElementById('afternoonPerson').value = currentUser || '';
 
             renderTasks();
             setupTaskPersonInputs();
@@ -2161,56 +2165,79 @@ _Hệ thống quản lý Pizza_`;
         function saveTaskData() {
             const storageKey = `taskData_${currentStore}`;
             const data = {
-                tasks: taskData,
-                persons: {
-                    morning: document.getElementById('morningPerson')?.value || '',
-                    afternoon: document.getElementById('afternoonPerson')?.value || ''
-                }
+                tasks: taskData
             };
             localStorage.setItem(storageKey, JSON.stringify(data));
         }
 
-        async function sendTasksToDiscord() {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-            const dateStr = now.toLocaleDateString('vi-VN');
+        async function sendMorningTasksToDiscord() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = now.toLocaleDateString('vi-VN');
 
-            const morningPerson = document.getElementById('morningPerson')?.value || 'Chưa có tên';
-            const afternoonPerson = document.getElementById('afternoonPerson')?.value || 'Chưa có tên';
+                const morningPerson = document.getElementById('morningPerson')?.value || 'Chưa có tên';
 
-            let message = `**📋 BÁO CÁO CÔNG VIỆC - ${STORE_NAMES[currentStore]}**\n`;
-            message += `**📅 ${dateStr} ${timeStr}**\n\n`;
+                let message = `**📋 BÁO CÁO CA SÁNG - ${STORE_NAMES[currentStore]}**\n`;
+                message += `**📅 ${dateStr} ${timeStr}**\n\n`;
 
-            message += `**☀️ CA SÁNG** - Người làm: ${morningPerson}\n`;
-            taskData.morning.forEach(item => {
-                const status = item.completed ? '✅' : '❌';
-                message += `${status} ${item.task}\n`;
-            });
-            message += '\n';
-
-            message += `**🌤️ CA CHIỀU** - Người làm: ${afternoonPerson}\n`;
-            taskData.afternoon.forEach(item => {
-                const status = item.completed ? '✅' : '❌';
-                message += `${status} ${item.task}\n`;
-            });
-
-            try {
-                const response = await fetch(TASK_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: message })
+                message += `**☀️ CA SÁNG (14:00)** - Người làm: ${morningPerson}\n`;
+                taskData.morning.forEach(item => {
+                    const status = item.completed ? '✅' : '❌';
+                    message += `${status} ${item.task}\n`;
                 });
 
-                if (response.ok) {
-                    showStatusToast('✅ Đã gửi Discord thành công!');
-                } else {
-                    showStatusToast('❌ Lỗi gửi Discord!');
+                try {
+                    const response = await fetch(TASK_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: message })
+                    });
+
+                    if (response.ok) {
+                        showStatusToast('✅ Đã gửi báo cáo ca sáng lên Discord!');
+                    } else {
+                        showStatusToast('❌ Lỗi gửi Discord!');
+                    }
+                } catch (error) {
+                    showStatusToast('❌ Không thể kết nối Discord!');
+                    console.error(error);
                 }
-            } catch (error) {
-                showStatusToast('❌ Không thể kết nối Discord!');
-                console.error(error);
             }
-        }
+
+            async function sendAfternoonTasksToDiscord() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = now.toLocaleDateString('vi-VN');
+
+                const afternoonPerson = document.getElementById('afternoonPerson')?.value || 'Chưa có tên';
+
+                let message = `**📋 BÁO CÁO CA CHIỀU - ${STORE_NAMES[currentStore]}**\n`;
+                message += `**📅 ${dateStr} ${timeStr}**\n\n`;
+
+                message += `**🌤️ CA CHIỀU (17:00)** - Người làm: ${afternoonPerson}\n`;
+                taskData.afternoon.forEach(item => {
+                    const status = item.completed ? '✅' : '❌';
+                    message += `${status} ${item.task}\n`;
+                });
+
+                try {
+                    const response = await fetch(TASK_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: message })
+                    });
+
+                    if (response.ok) {
+                        showStatusToast('✅ Đã gửi báo cáo ca chiều lên Discord!');
+                    } else {
+                        showStatusToast('❌ Lỗi gửi Discord!');
+                    }
+                } catch (error) {
+                    showStatusToast('❌ Không thể kết nối Discord!');
+                    console.error(error);
+                }
+            }
+
 
         function resetAllTasks() {
             if (confirm('Làm mới tất cả công việc?')) {
@@ -2218,16 +2245,11 @@ _Hệ thống quản lý Pizza_`;
                     morning: TASKS.morning.map(task => ({ task, completed: false })),
                     afternoon: TASKS.afternoon.map(task => ({ task, completed: false }))
                 };
-                const morning = document.getElementById('morningPerson');
-                const afternoon = document.getElementById('afternoonPerson');
-                if (morning) morning.value = '';
-                if (afternoon) afternoon.value = '';
                 saveTaskData();
                 renderTasks();
                 showStatusToast('✅ Đã làm mới!');
             }
         }
-
         function showStatusToast(message) {
             const existing = document.querySelector('.status-toast');
             if (existing) existing.remove();
