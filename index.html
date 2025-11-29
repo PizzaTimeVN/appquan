@@ -576,6 +576,11 @@
                     transform: translateY(0);
                 }
             }
+
+            /* Thêm vào phần <style> nếu muốn tùy chỉnh */
+#updateRevenueResult {
+    min-height: 60px;
+}
     </style>
 </head>
 <body>
@@ -648,38 +653,60 @@
                 </div>
             </div>
 
-            <!-- Revenue Section -->
-            <div id="revenueSection" class="content-section">
-                <button class="btn back-btn" onclick="showMainMenu()">← Quay Lại</button>
+           <!-- Revenue Section -->
+<div id="revenueSection" class="content-section">
+    <button class="btn back-btn" onclick="showMainMenu()">← Quay Lại</button>
 
-                <div class="input-row">
-                    <div class="input-group-inline">
-                        <label for="revenueDate">📅 Ngày nhập:</label>
-                        <input type="date" id="revenueDate">
-                    </div>
-                </div>
-                <h2 class="section-title">Nhập Doanh Thu</h2>
-                <div class="revenue-grid">
-                    <div class="revenue-item">
-                        <label>💵 Tiền Mặt (VNĐ)</label>
-                        <input type="text" id="cashRevenue" placeholder="0">
-                    </div>
-                    <div class="revenue-item">
-                        <label>🏦 Chuyển Khoản (VNĐ)</label>
-                        <input type="text" id="transferRevenue" placeholder="0">
-                    </div>
-                    <div class="revenue-item">
-                        <label>🚗 Grab (VNĐ)</label>
-                        <input type="text" id="grabRevenue" placeholder="0">
-                    </div>
-                    <div class="revenue-item">
-                        <label>🛍️ Shopee (VNĐ)</label>
-                        <input type="text" id="shopeeRevenue" placeholder="0">
-                    </div>
-                </div>
-                <button class="btn save-btn" onclick="saveRevenue()">Lưu Doanh Thu</button>
+    <div class="input-row">
+        <div class="input-group-inline">
+            <label for="revenueDate">📅 Ngày nhập:</label>
+            <input type="date" id="revenueDate">
+        </div>
+    </div>
+    <h2 class="section-title">Nhập Doanh Thu</h2>
+    <div class="revenue-grid">
+        <div class="revenue-item">
+            <label>💵 Tiền Mặt (VNĐ)</label>
+            <input type="text" id="cashRevenue" placeholder="0">
+        </div>
+        <div class="revenue-item">
+            <label>🏦 Chuyển Khoản (VNĐ)</label>
+            <input type="text" id="transferRevenue" placeholder="0">
+        </div>
+        <div class="revenue-item">
+            <label>🚗 Grab (VNĐ)</label>
+            <input type="text" id="grabRevenue" placeholder="0">
+        </div>
+        <div class="revenue-item">
+            <label>🛍️ Shopee (VNĐ)</label>
+            <input type="text" id="shopeeRevenue" placeholder="0">
+        </div>
+    </div>
+    <button class="btn save-btn" onclick="saveRevenue()">Lưu Doanh Thu</button>
+
+    <!-- Thêm phần cập nhật doanh thu -->
+    <div class="adjustment-box" style="margin-top: 40px;">
+        <h3>🔄 Cập Nhật Doanh Thu</h3>
+        <div class="input-row">
+            <div class="input-group-inline">
+                <label for="updateRevenueDate">📅 Chọn ngày cần cập nhật:</label>
+                <input type="date" id="updateRevenueDate">
             </div>
-
+        </div>
+        <div class="adjustment-row" style="margin-top: 20px;">
+            <select id="revenueTypeSelect">
+                <option value="">-- Chọn loại doanh thu --</option>
+                <option value="cash_revenue">💵 Tiền Mặt</option>
+                <option value="transfer_revenue">🏦 Chuyển Khoản</option>
+                <option value="grab_revenue">🚗 Grab</option>
+                <option value="shopee_revenue">🛍️ Shopee</option>
+            </select>
+            <input type="text" id="updateRevenueAmount" placeholder="Nhập số tiền mới">
+            <button class="btn small-btn" onclick="updateRevenue()" style="background: #ff9800;">Cập Nhật</button>
+        </div>
+        <div id="updateRevenueResult" style="margin-top: 15px;"></div>
+    </div>
+</div>
             <!-- Inventory Section -->
             <div id="inventorySection" class="content-section">
                 <button class="btn back-btn" onclick="showMainMenu()">← Quay Lại</button>
@@ -1255,6 +1282,11 @@
             if (section === 'revenue') {
                 const revenueDate = document.getElementById('revenueDate');
                 if (revenueDate) revenueDate.value = new Date().toISOString().split('T')[0];
+            
+
+            // Thêm dòng này để set ngày mặc định cho phần cập nhật
+                const updateRevenueDate = document.getElementById('updateRevenueDate');
+                if (updateRevenueDate) updateRevenueDate.value = new Date().toISOString().split('T')[0];
             }
             
             // 📊 Nếu mở tab Taskreminder → gán ngày hôm nay
@@ -2261,6 +2293,98 @@ _Hệ thống quản lý Pizza_`;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
+
+        // Format number input cho ô cập nhật
+const updateRevenueInput = document.getElementById('updateRevenueAmount');
+if (updateRevenueInput) {
+    formatNumberInput(updateRevenueInput);
+}
+
+async function updateRevenue() {
+    const updateDate = document.getElementById('updateRevenueDate')?.value;
+    const revenueType = document.getElementById('revenueTypeSelect')?.value;
+    const newAmount = parseFloat(document.getElementById('updateRevenueAmount')?.value.replace(/\./g, '')) || 0;
+    const resultDiv = document.getElementById('updateRevenueResult');
+
+    if (!updateDate) {
+        resultDiv.innerHTML = '<div class="alert alert-error">⚠️ Vui lòng chọn ngày cần cập nhật!</div>';
+        return;
+    }
+
+    if (!revenueType) {
+        resultDiv.innerHTML = '<div class="alert alert-error">⚠️ Vui lòng chọn loại doanh thu!</div>';
+        return;
+    }
+
+    if (newAmount < 0) {
+        resultDiv.innerHTML = '<div class="alert alert-error">⚠️ Số tiền không hợp lệ!</div>';
+        return;
+    }
+
+    try {
+        // Tìm bản ghi cần cập nhật
+        const { data: existingData, error: fetchError } = await supabase
+            .from('sale_quan')
+            .select('*')
+            .eq('store_id', currentStore)
+            .eq('date', updateDate)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (fetchError) throw fetchError;
+
+        if (!existingData || existingData.length === 0) {
+            resultDiv.innerHTML = '<div class="alert alert-error">❌ Không tìm thấy dữ liệu doanh thu cho ngày này!</div>';
+            return;
+        }
+
+        const recordId = existingData[0].id;
+        const oldAmount = existingData[0][revenueType];
+
+        // Tính lại tổng doanh thu
+        const oldTotal = existingData[0].total_revenue;
+        const newTotal = oldTotal - oldAmount + newAmount;
+
+        // Cập nhật bản ghi
+        const updateData = {
+            [revenueType]: newAmount,
+            total_revenue: newTotal
+        };
+
+        const { error: updateError } = await supabase
+            .from('sale_quan')
+            .update(updateData)
+            .eq('id', recordId);
+
+        if (updateError) throw updateError;
+
+        const revenueTypeNames = {
+            'cash_revenue': 'Tiền Mặt',
+            'transfer_revenue': 'Chuyển Khoản',
+            'grab_revenue': 'Grab',
+            'shopee_revenue': 'Shopee'
+        };
+
+        resultDiv.innerHTML = `
+            <div class="alert alert-success">
+                ✅ Đã cập nhật ${revenueTypeNames[revenueType]} thành công!<br>
+                Số tiền cũ: ${oldAmount.toLocaleString('vi-VN')} VNĐ → Số tiền mới: ${newAmount.toLocaleString('vi-VN')} VNĐ<br>
+            </div>
+        `;
+
+        // Reset form
+        document.getElementById('revenueTypeSelect').value = '';
+        document.getElementById('updateRevenueAmount').value = '';
+
+        setTimeout(() => {
+            resultDiv.innerHTML = '';
+        }, 5000);
+
+    } catch (error) {
+        console.error('Error:', error);
+        resultDiv.innerHTML = `<div class="alert alert-error">❌ Lỗi khi cập nhật: ${error.message}</div>`;
+    }
+}
     </script>
 </body>
 </html>
