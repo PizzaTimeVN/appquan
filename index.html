@@ -1144,9 +1144,9 @@
             }
         }
 
-        // Login
-       // Login
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+     
+    // Sửa lại hàm login
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
@@ -1158,27 +1158,32 @@
     }
 
     try {
-        const res = await fetch(`${API_URL}/api/login`, {
+        // Gọi endpoint mới /api/login-store
+        const res = await fetch(`${API_URL}/api/login-store`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ 
+                username, 
+                password,
+                store_id: store  // ← Thêm store_id
+            })
         });
 
         const result = await res.json();
 
         if (res.ok && result.success) {
-            currentStore = store;
-            currentUser = result.user.display_name; // Tên hiển thị
-            currentUsername = username; // Username gốc
+            currentStore = result.store_id; // ← Lấy từ response
+            currentUser = result.user.display_name; // ← Đúng cấu trúc
+            currentUsername = username;
             showApp();
         } else {
-            alert('❌ Sai tên đăng nhập hoặc mật khẩu!');
+            alert('❌ ' + (result.detail || 'Sai tên đăng nhập hoặc mật khẩu!'));
         }
     } catch (err) {
+        console.error('Login error:', err);
         alert('❌ Lỗi kết nối: ' + err.message);
     }
 });
-
 
         function showApp() {
             document.getElementById('loginScreen').classList.add('hidden');
