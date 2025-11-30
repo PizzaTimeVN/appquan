@@ -933,26 +933,8 @@
 
         // Login credentials
         // Login credentials - Danh sách nhân viên
-        const EMPLOYEES = {
-        'Le':     { password: 'xfgMyqK%',  name: 'Lê',     canAccessAll: false },
-        'Yen':    { password: 'miOdxPSD',  name: 'Yên',    canAccessAll: false },
-        'Kiet':   { password: '1zOYj6r^',  name: 'Kiệt',   canAccessAll: false },
-        'Tram':   { password: 'JOlqCw5?',  name: 'Trâm',   canAccessAll: false },
-        'Tien':   { password: 'r8K%uYRh',  name: 'Tiền',   canAccessAll: false },
-        'Thuy':   { password: 'o8jTq1OR',  name: 'Thủy',   canAccessAll: false },
-        'Linh':   { password: '$q8CCR3v',  name: 'Linh',   canAccessAll: false },
-        'Nguyen': { password: 'gxk0zYBq',  name: 'Nguyên', canAccessAll: false },
-        'Hang':   { password: 'ABcagR#V',  name: 'Hằng',   canAccessAll: false },
-        'Binh':   { password: 'udLFSqj8',  name: 'Bình',   canAccessAll: false },
-        'Phuong': { password: 'M&wLVngU',  name: 'Phương', canAccessAll: false },
-        'Quyen':  { password: 'CxI32zNU',  name: 'Quyên',  canAccessAll: false },
-        'Thinh':  { password: 'Oxv#LGij',  name: 'Thịnh',  canAccessAll: false },
-        'Minh':   { password: 'WJ73QA@2',  name: 'Minh',   canAccessAll: false },
-        'Van':    { password: '@QiU&Al0',  name: 'Vân',    canAccessAll: false },
-        'Bo':    { password: '123',  name: 'Bo',    canAccessAll: false },
-        'Quanh': { password: 'T7p!zQ9@Km', name: 'Quanh', canAccessAll: false },
-
-        };
+        const API_URL = 'https://pizza-backend-jufu.onrender.com';
+        
 
         const STORE_NAMES = {
             'DH': 'DH',
@@ -1164,28 +1146,39 @@
 
         // Login
        // Login
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            const store = document.getElementById('storeSelect').value;
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const store = document.getElementById('storeSelect').value;
 
-            if (!store) {
-                alert('⚠️ Vui lòng chọn quán làm việc!');
-                return;
-            }
+    if (!store) {
+        alert('⚠️ Vui lòng chọn quán làm việc!');
+        return;
+    }
 
-            const employee = EMPLOYEES[username];
-            
-            if (employee && employee.password === password) {
-                currentStore = store;
-                currentUser = employee.name;
-                currentUsername = username;
-                showApp();
-            } else {
-                alert('❌ Sai tên đăng nhập hoặc mật khẩu!');
-            }
+    try {
+        const res = await fetch(`${API_URL}/api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
         });
+
+        const result = await res.json();
+
+        if (res.ok && result.success) {
+            currentStore = store;
+            currentUser = result.user.display_name; // Tên hiển thị
+            currentUsername = username; // Username gốc
+            showApp();
+        } else {
+            alert('❌ Sai tên đăng nhập hoặc mật khẩu!');
+        }
+    } catch (err) {
+        alert('❌ Lỗi kết nối: ' + err.message);
+    }
+});
+
 
         function showApp() {
             document.getElementById('loginScreen').classList.add('hidden');
