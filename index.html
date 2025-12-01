@@ -901,13 +901,9 @@
     </div>
 
     <script>
-        // Supabase Configuration
-        const SUPABASE_URL = 'https://tyuufjwutazjfuiawiul.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5dXVmand1dGF6amZ1aWF3aXVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MDk4OTIsImV4cCI6MjA3NjA4NTg5Mn0.8WEsb2tBD6akNA9h9tR9zIAqjkZz0xZYVNbYCx2dEbc';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const API_URL = 'https://pizza-backend-jufu.onrender.com';
+        let currentPassword = ''; // ← Lưu password để dùng cho Authorization header
 
-        // Discord Webhook for Tasks
-        const TASK_WEBHOOK_URL = 'https://discord.com/api/webhooks/1434581338786234388/YLq7OJfqS0_UBqTvY_bGbXdUKZgKXgbK3Mc9neAVTwBUfZZBgL4Eno6G5kUJRF87X7zm';
 
         // Task definitions
         const TASKS = {
@@ -931,10 +927,6 @@
             ]
         };
 
-        // Login credentials
-        // Login credentials - Danh sách nhân viên
-        const API_URL = 'https://pizza-backend-jufu.onrender.com';
-        
 
         const STORE_NAMES = {
             'DH': 'DH',
@@ -1347,43 +1339,40 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         }
 
         async function saveInventory() {
-            const dateInput = document.getElementById('inventoryDate').value;
-            const userInput = document.getElementById('inventoryUser').value.trim();
+    const dateInput = document.getElementById('inventoryDate').value;
+    const userInput = document.getElementById('inventoryUser').value.trim();
 
-            if (!dateInput || !userInput) {
-                alert("⚠️ Vui lòng nhập đủ ngày và người kiểm hàng!");
-                return;
-            }
+    if (!dateInput || !userInput) {
+        alert("⚠️ Vui lòng nhập đủ thông tin!");
+        return;
+    }
 
-            if (!inventoryData || Object.keys(inventoryData).length === 0) {
-                alert("⚠️ Không có dữ liệu tồn kho để lưu!");
-                return;
-            }
-
-            const record = {
+    try {
+        const res = await fetch(`${API_URL}/api/store/inventory`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${document.getElementById('password').value}`)
+            },
+            body: JSON.stringify({
                 store_id: currentStore,
                 username: currentUser,
                 date: dateInput,
                 inventory: inventoryData,
-                input_user: userInput,
-                created_at: new Date().toISOString()
-            };
+                input_user: userInput
+            })
+        });
 
-            try {
-                const { data, error } = await supabase
-                    .from("ton_quan")
-                    .insert([record])
-                    .select();
-
-                if (error) throw error;
-
-                alert("✅ Đã lưu dữ liệu tồn kho lên Supabase!");
-                console.log("Inserted record:", data);
-            } catch (err) {
-                console.error("❌ Lỗi khi lưu lên Supabase:", err);
-                alert("❌ Không thể lưu dữ liệu: " + err.message);
-            }
+        const result = await res.json();
+        if (res.ok) {
+            alert('✅ ' + result.message);
+        } else {
+            alert('❌ ' + result.detail);
         }
+    } catch (err) {
+        alert('❌ Lỗi: ' + err.message);
+    }
+}
 
         function addAdjustment() {
             const productSelect = document.getElementById('adjustProductSelect');
@@ -1429,168 +1418,142 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         }
 
         async function saveAdjustments() {
-            if (adjustments.length === 0) {
-                alert("⚠️ Chưa có sản phẩm nào để điều chỉnh!");
-                return;
-            }
+    if (adjustments.length === 0) {
+        alert("⚠️ Chưa có điều chỉnh!");
+        return;
+    }
 
-            const dateInput = document.getElementById('inventoryDate').value;
-            const userInput = document.getElementById('inventoryUser').value.trim();
+    const dateInput = document.getElementById('inventoryDate').value;
+    const userInput = document.getElementById('inventoryUser').value.trim();
 
-            if (!dateInput || !userInput) {
-                alert("⚠️ Vui lòng nhập đủ ngày và người kiểm hàng!");
-                return;
-            }
+    try {
+        const res = await fetch(`${API_URL}/api/store/inventory/adjust`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${document.getElementById('password').value}`)
+            },
+            body: JSON.stringify({
+                store_id: currentStore,
+                username: currentUser,
+                date: dateInput,
+                input_user: userInput,
+                adjustments: adjustments
+            })
+        });
 
-            try {
-                const { data: latest, error: latestError } = await supabase
-                    .from('ton_quan')
-                    .select('inventory')
-                    .eq('store_id', currentStore)
-                    .order('created_at', { ascending: false })
-                    .limit(1);
-
-                if (latestError) throw latestError;
-
-                let inventory = latest && latest.length > 0 ? { ...latest[0].inventory } : { ...inventoryData };
-
-                adjustments.forEach(adj => {
-                    inventory[adj.product] = adj.qty;
-                });
-
-                const newRecord = {
-                    store_id: currentStore,
-                    date: dateInput,
-                    username: currentUser,
-                    input_user: userInput,
-                    inventory: inventory,
-                    created_at: new Date().toISOString()
-                };
-
-                const { error: insertError } = await supabase
-                    .from('ton_quan')
-                    .insert([newRecord])
-                    .select();
-
-                if (insertError) throw insertError;
-
-                alert("✅ Đã lưu điều chỉnh tồn kho!");
-
-                inventoryData = inventory;
-                adjustments = [];
-                document.getElementById('adjustmentTableBody').innerHTML = "";
-                renderInventory();
-
-                await new Promise(r => setTimeout(r, 500));
-                await renderOrderList();
-
-            } catch (err) {
-                console.error("❌ Lỗi khi lưu điều chỉnh:", err);
-                alert("❌ Lỗi khi lưu điều chỉnh: " + err.message);
-            }
+        const result = await res.json();
+        if (res.ok) {
+            alert('✅ ' + result.message);
+            inventoryData = result.inventory;
+            adjustments = [];
+            document.getElementById('adjustmentTableBody').innerHTML = "";
+            renderInventory();
+            await renderOrderList();
+        } else {
+            alert('❌ ' + result.detail);
         }
+    } catch (err) {
+        alert('❌ Lỗi: ' + err.message);
+    }
+}
+
 
         // Đặt hàng function
         let sortedItemNames = []; // Thêm biến toàn cục để lưu thứ tự
 
         async function renderOrderList() {
-            const container = document.getElementById('orderList');
-            container.innerHTML = '<div class="loading">⏳ Đang tải dữ liệu tồn kho...</div>';
+    const container = document.getElementById('orderList');
+    container.innerHTML = '<div class="loading">⏳ Đang tải...</div>';
 
-            try {
-                const { data, error } = await supabase
-                    .from('ton_quan')
-                    .select('inventory, date, created_at')
-                    .eq('store_id', currentStore)
-                    .order('created_at', { ascending: false })
-                    .limit(1);
-
-                if (error) throw error;
-                
-                if (!data || data.length === 0) {
-                    container.innerHTML = '<p class="info-text">⚠️ Chưa có dữ liệu tồn kho cho quán này.</p>';
-                    return;
-                }
-
-                const latest = data[0];
-                inventoryData = latest.inventory || {};
-
-                const baseLToday = inventoryData['Đế L'] || 0;
-                const baseSToday = inventoryData['Đế S'] || 0;
-
-                container.innerHTML = '';
-
-                const sortedItems = Object.entries(inventoryData).sort((a, b) => a[1] - b[1]);
-                
-                // Lưu thứ tự tên item để dùng khi save
-                sortedItemNames = sortedItems.map(([name]) => name);
-
-                for (const [item, stock] of sortedItems) {
-                    const isLowStock = stock < 3;
-                    const div = document.createElement('div');
-                    div.className = `order-item${isLowStock ? ' low-stock' : ''}`;
-                    div.innerHTML = `
-                        <span style="font-weight: 600; color: #333;">${item}</span>
-                        <span style="color: ${isLowStock ? '#dc3545' : '#28a745'}; font-weight: 600;">Tồn: ${stock}</span>
-                        <input type="number" min="0" value="0" placeholder="Số lượng đặt">
-                    `;
-                    container.appendChild(div);
-                }
-
-                const info = document.createElement('div');
-                info.className = 'info-text';
-                info.textContent = `📅 Dữ liệu tồn kho: ${new Date(latest.date).toLocaleDateString('vi-VN')} (cập nhật ${new Date(latest.created_at).toLocaleString('vi-VN')})`;
-                container.appendChild(info);
-
-            } catch (err) {
-                console.error('❌ Lỗi renderOrderList:', err);
-                container.innerHTML = '<p class="alert alert-error">❌ Không thể tải dữ liệu tồn kho. Vui lòng thử lại!</p>';
+    try {
+        const res = await fetch(`${API_URL}/api/store/inventory/latest/${currentStore}`, {
+            headers: {
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${document.getElementById('password').value}`)
             }
+        });
+
+        const result = await res.json();
+        if (!res.ok || !result.data) {
+            container.innerHTML = '<p class="info-text">⚠️ Chưa có dữ liệu tồn kho</p>';
+            return;
         }
 
+        inventoryData = result.data.inventory || {};
+        container.innerHTML = '';
+
+        const sortedItems = Object.entries(inventoryData).sort((a, b) => a[1] - b[1]);
+        sortedItemNames = sortedItems.map(([name]) => name);
+
+        for (const [item, stock] of sortedItems) {
+            const isLowStock = stock < 3;
+            const div = document.createElement('div');
+            div.className = `order-item${isLowStock ? ' low-stock' : ''}`;
+            div.innerHTML = `
+                <span style="font-weight: 600;">${item}</span>
+                <span style="color: ${isLowStock ? '#dc3545' : '#28a745'}; font-weight: 600;">Tồn: ${stock}</span>
+                <input type="number" min="0" value="0" placeholder="Số lượng đặt">
+            `;
+            container.appendChild(div);
+        }
+
+        const info = document.createElement('div');
+        info.className = 'info-text';
+        info.textContent = `📅 Cập nhật: ${new Date(result.data.created_at).toLocaleString('vi-VN')}`;
+        container.appendChild(info);
+
+    } catch (err) {
+        container.innerHTML = '<p class="alert alert-error">❌ Lỗi tải dữ liệu</p>';
+    }
+}
+
         async function saveOrder() {
-            const orderItems = [];
-            const inputs = document.querySelectorAll('#orderList .order-item input');
-            const items = sortedItemNames;
+    const orderItems = [];
+    const inputs = document.querySelectorAll('#orderList .order-item input');
 
-            inputs.forEach((input, index) => {
-                const quantity = parseInt(input.value) || 0;
-                if (quantity > 0 && items[index]) {
-                    orderItems.push({
-                        item: items[index],
-                        current_stock: inventoryData[items[index]],
-                        order_quantity: quantity
-                    });
-                }
+    inputs.forEach((input, index) => {
+        const quantity = parseInt(input.value) || 0;
+        if (quantity > 0 && sortedItemNames[index]) {
+            orderItems.push({
+                item: sortedItemNames[index],
+                current_stock: inventoryData[sortedItemNames[index]],
+                order_quantity: quantity
             });
+        }
+    });
 
-            if (orderItems.length === 0) {
-                alert('⚠️ Vui lòng nhập số lượng hàng cần đặt!');
-                return;
-            }
+    if (orderItems.length === 0) {
+        alert('⚠️ Vui lòng nhập số lượng!');
+        return;
+    }
 
-            const data = {
+    try {
+        const res = await fetch(`${API_URL}/api/store/order`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${currentPassword}`)
+            },
+            body: JSON.stringify({
                 store_id: currentStore,
                 username: currentUser,
                 date: new Date().toISOString().split('T')[0],
-                order_items: orderItems,
-                created_at: new Date().toISOString()
-            };
+                order_items: orderItems
+            })
+        });
 
-            try {
-                const { error } = await supabase.from('order_quan').insert([data]).select();
-                if (error) throw error;
-
-                await sendTelegramNotification(data, orderItems);
-
-                alert('✅ Đã lưu đơn hàng và gửi thông báo thành công!');
-                document.querySelectorAll('#orderList .order-item input').forEach(input => input.value = '0');
-
-            } catch (error) {
-                console.error('Error:', error);
-                alert('❌ Có lỗi khi lưu dữ liệu: ' + error.message);
-            }
+        const result = await res.json();
+        if (res.ok) {
+            alert('✅ ' + result.message);
+            document.querySelectorAll('#orderList .order-item input').forEach(input => input.value = '0');
+        } else {
+            alert('❌ ' + result.detail);
         }
+    } catch (err) {
+        alert('❌ Lỗi: ' + err.message);
+    }
+}
+
 
         async function sendTelegramNotification(data, orderItems) {
             const botToken = '8036982528:AAEymf0l1HH47SB10gcd7QwxyugpBLxrvas';
@@ -1658,41 +1621,47 @@ _Hệ thống quản lý Pizza_`;
             if (el) formatNumberInput(el);
         });
 
-                async function saveRevenue() {
-            const revenueDate = document.getElementById('revenueDate')?.value;
-            
-            if (!revenueDate) {
-                alert('⚠️ Vui lòng chọn ngày bán!');
-                return;
-            }
+              async function saveRevenue() {
+    const revenueDate = document.getElementById('revenueDate')?.value;
+    if (!revenueDate) {
+        alert('⚠️ Vui lòng chọn ngày!');
+        return;
+    }
 
-            const cash = parseFloat(document.getElementById('cashRevenue').value.replace(/\./g, '')) || 0;
-            const transfer = parseFloat(document.getElementById('transferRevenue').value.replace(/\./g, '')) || 0;
-            const grab = parseFloat(document.getElementById('grabRevenue').value.replace(/\./g, '')) || 0;
-            const shopee = parseFloat(document.getElementById('shopeeRevenue').value.replace(/\./g, '')) || 0;
+    const cash = parseFloat(document.getElementById('cashRevenue').value.replace(/\./g, '')) || 0;
+    const transfer = parseFloat(document.getElementById('transferRevenue').value.replace(/\./g, '')) || 0;
+    const grab = parseFloat(document.getElementById('grabRevenue').value.replace(/\./g, '')) || 0;
+    const shopee = parseFloat(document.getElementById('shopeeRevenue').value.replace(/\./g, '')) || 0;
 
-            const data = {
+    try {
+        const res = await fetch(`${API_URL}/api/store/revenue`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${document.getElementById('password').value}`)
+            },
+            body: JSON.stringify({
                 store_id: currentStore,
                 username: currentUser,
-                date: revenueDate, // ← Lưu ngày người dùng chọn
+                date: revenueDate,
                 cash_revenue: cash,
                 transfer_revenue: transfer,
                 grab_revenue: grab,
-                shopee_revenue: shopee,
-                total_revenue: cash + transfer + grab + shopee,
-                created_at: new Date().toISOString()
-            };
+                shopee_revenue: shopee
+            })
+        });
 
-            try {
-                const { error } = await supabase.from('sale_quan').insert([data]).select();
-                if (error) throw error;
-                alert('✅ Đã gửi doanh thu thành công!'); // ← Đổi thông báo
-                document.querySelectorAll('#revenueSection input[type="text"]').forEach(input => input.value = '');
-            } catch (error) {
-                console.error('Error:', error);
-                alert('❌ Có lỗi khi lưu dữ liệu: ' + error.message);
-            }
+        const result = await res.json();
+        if (res.ok) {
+            alert('✅ ' + result.message);
+            document.querySelectorAll('#revenueSection input[type="text"]').forEach(input => input.value = '');
+        } else {
+            alert('❌ ' + result.detail);
         }
+    } catch (err) {
+        alert('❌ Lỗi: ' + err.message);
+    }
+}
 
         
         // Sales Tracker Functions
@@ -1764,71 +1733,74 @@ _Hệ thống quản lý Pizza_`;
             itemList.appendChild(row);
         }
 
-        async function saveSalesData() {
-            const rows = document.querySelectorAll('#salesItemList .item-row');
-            if (rows.length === 0) {
-                showSalesAlert('⚠️ Vui lòng thêm ít nhất một mặt hàng!', 'error');
-                return;
-            }
+        // ===== Sales =====
+async function saveSalesData() {
+    const rows = document.querySelectorAll('#salesItemList .item-row');
+    if (rows.length === 0) {
+        showSalesAlert('⚠️ Vui lòng thêm mặt hàng!', 'error');
+        return;
+    }
 
-            const saleDate = document.getElementById('saleDate').value;
-            const saleEmployee = document.getElementById('saleEmployee').value.trim();
+    const saleDate = document.getElementById('saleDate').value;
+    const saleEmployee = document.getElementById('saleEmployee').value.trim();
 
-            if (!saleDate || !saleEmployee) {
-                showSalesAlert('⚠️ Vui lòng điền đầy đủ ngày bán và người nhập!', 'error');
-                return;
-            }
+    if (!saleDate || !saleEmployee) {
+        showSalesAlert('⚠️ Vui lòng điền đầy đủ thông tin!', 'error');
+        return;
+    }
 
-            const salesData = [];
-            let hasValidData = false;
+    const items = [];
+    rows.forEach(row => {
+        const productName = row.querySelector('select').value;
+        const quantity = row.querySelector('input').value;
 
-            rows.forEach(row => {
-                const productName = row.querySelector('select').value;
-                const quantity = row.querySelector('input').value;
-
-                if (productName && quantity && quantity > 0) {
-                    const product = salesProducts.find(p => p.name === productName);
-                    if (product) {
-                        salesData.push({
-                            date: saleDate,
-                            store: currentStore,
-                            employee: saleEmployee,
-                            category: salesCategories.find(c => c.id === product.categoryId).name,
-                            product_name: product.name,
-                            quantity: parseInt(quantity),
-                            created_at: new Date().toISOString()
-                        });
-                        hasValidData = true;
-                    }
-                }
-            });
-
-            if (!hasValidData) {
-                showSalesAlert('⚠️ Vui lòng nhập ít nhất một mặt hàng với số lượng hợp lệ!', 'error');
-                return;
-            }
-
-            try {
-                const { data, error } = await supabase
-                    .from('pizza_sales')
-                    .insert(salesData)
-                    .select();
-
-                if (error) throw error;
-
-                showSalesAlert('✅ Lưu dữ liệu thành công!', 'success');
-                
-                setTimeout(() => {
-                    document.getElementById('salesItemList').innerHTML = '';
-                    document.getElementById('salesCategory').value = '';
-                    selectedSalesCategory = null;
-                }, 1500);
-
-            } catch (error) {
-                console.error('Error:', error);
-                showSalesAlert('❌ Lỗi khi lưu dữ liệu: ' + error.message, 'error');
+        if (productName && quantity && quantity > 0) {
+            const product = salesProducts.find(p => p.name === productName);
+            if (product) {
+                items.push({
+                    category: salesCategories.find(c => c.id === product.categoryId).name,
+                    product_name: product.name,
+                    quantity: parseInt(quantity)
+                });
             }
         }
+    });
+
+    if (items.length === 0) {
+        showSalesAlert('⚠️ Vui lòng nhập số lượng hợp lệ!', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/api/store/sales`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${currentPassword}`)
+            },
+            body: JSON.stringify({
+                store_id: currentStore,
+                date: saleDate,
+                employee: saleEmployee,
+                items: items
+            })
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+            showSalesAlert('✅ ' + result.message, 'success');
+            setTimeout(() => {
+                document.getElementById('salesItemList').innerHTML = '';
+                document.getElementById('salesCategory').value = '';
+                selectedSalesCategory = null;
+            }, 1500);
+        } else {
+            showSalesAlert('❌ ' + result.detail, 'error');
+        }
+    } catch (err) {
+        showSalesAlert('❌ Lỗi: ' + err.message, 'error');
+    }
+}
 
         function showSalesAlert(message, type) {
             const container = document.getElementById('salesAlertContainer');
@@ -1897,10 +1869,28 @@ _Hệ thống quản lý Pizza_`;
         }
 
         // Load all data for check cake
-        async function loadAllCakeData() {
-            await loadTonQuan();
-            await loadExportsData();
+       // ===== Cake Check =====
+async function loadAllCakeData() {
+    try {
+        const res = await fetch(`${API_URL}/api/store/cake/base-data/${currentStore}`, {
+            headers: {
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${currentPassword}`)
+            }
+        });
+
+        const result = await res.json();
+        if (res.ok && result.data) {
+            document.getElementById('baseLYesterday').value = result.data.base_l_yesterday;
+            document.getElementById('baseSYesterday').value = result.data.base_s_yesterday;
+            document.getElementById('baseLToday').value = result.data.base_l_today;
+            document.getElementById('baseSToday').value = result.data.base_s_today;
+            document.getElementById('baseLOut').value = result.data.base_l_out;
+            document.getElementById('baseSOut').value = result.data.base_s_out;
         }
+    } catch (err) {
+        console.error('Lỗi load cake data:', err);
+    }
+}
 
         // Load tồn kho từ bảng ton_quan
         async function loadTonQuan() {
@@ -2064,77 +2054,50 @@ _Hệ thống quản lý Pizza_`;
 
         // Hàm gửi kết quả qua Discord
         async function sendCakeResultToDiscord() {
-            if (!lastCakeCheckResult) {
-                alert('⚠️ Vui lòng kiểm tra bánh trước khi gửi!');
-                return;
-            }
+    if (!lastCakeCheckResult) {
+        alert('⚠️ Vui lòng kiểm tra bánh trước!');
+        return;
+    }
 
-            const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1429805698413232238/GAygBOBeaQQfL_G9m4_KA-UZVJ3d62WFPTDpJaX-8PwxRe3shjrnwmCXRggKRkqUEz1S'; // Thay bằng webhook URL của bạn
+    const r = lastCakeCheckResult;
 
-            const r = lastCakeCheckResult;
-            
-            const embedColor = (r.LDiff === 0 && r.SDiff === 0) ? 3066993 : // Green
-                            (r.LDiff > 0 || r.SDiff > 0) ? 15158332 : // Red
-                            3447003; // Blue
+    try {
+        const res = await fetch(`${API_URL}/api/store/cake/check`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${currentPassword}`)
+            },
+            body: JSON.stringify({
+                store_id: currentStore,
+                date: r.date,
+                user: r.user,
+                base_l_yesterday: r.LYesterday,
+                base_s_yesterday: r.SYesterday,
+                base_l_today: r.LToday,
+                base_s_today: r.SToday,
+                base_l_out: r.LOut,
+                base_s_out: r.SOut,
+                base_l_discard: r.LDiscard,
+                base_s_discard: r.SDiscard,
+                base_l_machine: r.LMachine,
+                base_s_machine: r.SMachine
+            })
+        });
 
-            const discordPayload = {
-                embeds: [{
-                    title: '🧁 Kết Quả Kiểm Tra Bánh',
-                    color: embedColor,
-                    fields: [
-                        { name: '📅 Ngày', value: r.date, inline: true },
-                        { name: '🏪 Quán', value: r.store, inline: true },
-                        { name: '👤 Người kiểm', value: r.user, inline: true },
-                        { name: '\u200B', value: '\u200B' },
-                        { name: '📊 Số liệu hôm qua', value: `Đế L: ${r.LYesterday} | Đế S: ${r.SYesterday}`, inline: false },
-                        { name: '📊 Số liệu hôm nay', value: `Đế L: ${r.LToday} | Đế S: ${r.SToday}`, inline: false },
-                        { name: '📦 Mang ra', value: `Đế L: ${r.LOut} | Đế S: ${r.SOut}`, inline: false },
-                        { name: '🗑️ Bỏ đi', value: `Đế L: ${r.LDiscard} | Đế S: ${r.SDiscard}`, inline: false },
-                        { name: '🤖 Máy bán', value: `Đế L: ${r.LMachine} | Đế S: ${r.SMachine}`, inline: false },
-                        { name: '\u200B', value: '\u200B' },
-                        { 
-                            name: '🔍 Kết quả Đế L', 
-                            value: `Thực tế: **${r.LActual}** | Máy: **${r.LMachine}** → ${
-                                r.LDiff === 0 ? '✅ **Đủ**' : 
-                                r.LDiff > 0 ? `⚠️ **Thiếu ${r.LDiff}**` : 
-                                `✅ **Dư ${-r.LDiff}**`
-                            }`, 
-                            inline: false 
-                        },
-                        { 
-                            name: '🔍 Kết quả Đế S', 
-                            value: `Thực tế: **${r.SActual}** | Máy: **${r.SMachine}** → ${
-                                r.SDiff === 0 ? '✅ **Đủ**' : 
-                                r.SDiff > 0 ? `⚠️ **Thiếu ${r.SDiff}**` : 
-                                `✅ **Dư ${-r.SDiff}**`
-                            }`, 
-                            inline: false 
-                        }
-                    ],
-                    timestamp: new Date().toISOString(),
-                    footer: { text: 'Hệ thống quản lý bánh' }
-                }]
-            };
-
-            try {
-                const response = await fetch(DISCORD_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(discordPayload)
-                });
-
-                if (response.ok) {
-                    alert('✅ Đã gửi kết quả thành công!');
-                    document.getElementById('sendDiscordBtn').style.display = 'none';
-                    lastCakeCheckResult = null; // Reset sau khi gửi
-                } else {
-                    throw new Error('Discord webhook failed');
-                }
-            } catch (err) {
-                console.error('❌ Lỗi gửi Discord:', err);
-                alert('❌ Không thể gửi qua Discord. Vui lòng kiểm tra webhook URL!');
-            }
+        const result = await res.json();
+        if (res.ok) {
+            alert('✅ ' + result.message);
+            document.getElementById('sendDiscordBtn').style.display = 'none';
+            lastCakeCheckResult = null;
+        } else {
+            alert('❌ ' + result.detail);
         }
+    } catch (err) {
+        alert('❌ Lỗi: ' + err.message);
+    }
+}
+
 
         // Task Reminder Functions
        function initializeTasks() {
@@ -2201,74 +2164,65 @@ _Hệ thống quản lý Pizza_`;
             localStorage.setItem(storageKey, JSON.stringify(data));
         }
 
-        async function sendMorningTasksToDiscord() {
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                const dateStr = now.toLocaleDateString('vi-VN');
+       // ===== Tasks =====
+async function sendMorningTasksToDiscord() {
+    const morningPerson = document.getElementById('morningPerson')?.value || 'Chưa có tên';
 
-                const morningPerson = document.getElementById('morningPerson')?.value || 'Chưa có tên';
+    try {
+        const res = await fetch(`${API_URL}/api/store/tasks/report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${currentPassword}`)
+            },
+            body: JSON.stringify({
+                store_id: currentStore,
+                session: 'morning',
+                person: morningPerson,
+                tasks: taskData.morning
+            })
+        });
 
-                let message = `**📋 BÁO CÁO CA SÁNG - ${STORE_NAMES[currentStore]}**\n`;
-                message += `**📅 ${dateStr} ${timeStr}**\n\n`;
+        const result = await res.json();
+        if (res.ok) {
+            showStatusToast('✅ Đã gửi ca sáng!');
+        } else {
+            showStatusToast('❌ Lỗi gửi!');
+        }
+    } catch (err) {
+        showStatusToast('❌ Không kết nối được!');
+    }
+}
 
-                message += `**☀️ CA SÁNG (14:00)** - Người làm: ${morningPerson}\n`;
-                taskData.morning.forEach(item => {
-                    const status = item.completed ? '✅' : '❌';
-                    message += `${status} ${item.task}\n`;
-                });
 
-                try {
-                    const response = await fetch(TASK_WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ content: message })
-                    });
+ async function sendAfternoonTasksToDiscord() {
+    const afternoonPerson = document.getElementById('afternoonPerson')?.value || 'Chưa có tên';
 
-                    if (response.ok) {
-                        showStatusToast('✅ Đã gửi báo cáo ca sáng lên Discord!');
-                    } else {
-                        showStatusToast('❌ Lỗi gửi Discord!');
-                    }
-                } catch (error) {
-                    showStatusToast('❌ Không thể kết nối Discord!');
-                    console.error(error);
-                }
-            }
+    try {
+        const res = await fetch(`${API_URL}/api/store/tasks/report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${currentPassword}`)
+            },
+            body: JSON.stringify({
+                store_id: currentStore,
+                session: 'afternoon',
+                person: afternoonPerson,
+                tasks: taskData.afternoon
+            })
+        });
 
-            async function sendAfternoonTasksToDiscord() {
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                const dateStr = now.toLocaleDateString('vi-VN');
-
-                const afternoonPerson = document.getElementById('afternoonPerson')?.value || 'Chưa có tên';
-
-                let message = `**📋 BÁO CÁO CA CHIỀU - ${STORE_NAMES[currentStore]}**\n`;
-                message += `**📅 ${dateStr} ${timeStr}**\n\n`;
-
-                message += `**🌤️ CA CHIỀU (17:00)** - Người làm: ${afternoonPerson}\n`;
-                taskData.afternoon.forEach(item => {
-                    const status = item.completed ? '✅' : '❌';
-                    message += `${status} ${item.task}\n`;
-                });
-
-                try {
-                    const response = await fetch(TASK_WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ content: message })
-                    });
-
-                    if (response.ok) {
-                        showStatusToast('✅ Đã gửi báo cáo ca chiều lên Discord!');
-                    } else {
-                        showStatusToast('❌ Lỗi gửi Discord!');
-                    }
-                } catch (error) {
-                    showStatusToast('❌ Không thể kết nối Discord!');
-                    console.error(error);
-                }
-            }
-
+        const result = await res.json();
+        if (res.ok) {
+            showStatusToast('✅ Đã gửi ca chiều!');
+        } else {
+            showStatusToast('❌ Lỗi gửi!');
+        }
+    } catch (err) {
+        showStatusToast('❌ Không kết nối được!');
+    }
+}
 
         function resetAllTasks() {
             if (confirm('Làm mới tất cả công việc?')) {
@@ -2304,83 +2258,35 @@ async function updateRevenue() {
     const newAmount = parseFloat(document.getElementById('updateRevenueAmount')?.value.replace(/\./g, '')) || 0;
     const resultDiv = document.getElementById('updateRevenueResult');
 
-    if (!updateDate) {
-        resultDiv.innerHTML = '<div class="alert alert-error">⚠️ Vui lòng chọn ngày cần cập nhật!</div>';
-        return;
-    }
-
-    if (!revenueType) {
-        resultDiv.innerHTML = '<div class="alert alert-error">⚠️ Vui lòng chọn loại doanh thu!</div>';
-        return;
-    }
-
-    if (newAmount < 0) {
-        resultDiv.innerHTML = '<div class="alert alert-error">⚠️ Số tiền không hợp lệ!</div>';
+    if (!updateDate || !revenueType) {
+        resultDiv.innerHTML = '<div class="alert alert-error">⚠️ Vui lòng điền đầy đủ thông tin!</div>';
         return;
     }
 
     try {
-        // Tìm bản ghi cần cập nhật
-        const { data: existingData, error: fetchError } = await supabase
-            .from('sale_quan')
-            .select('*')
-            .eq('store_id', currentStore)
-            .eq('date', updateDate)
-            .order('created_at', { ascending: false })
-            .limit(1);
+        const res = await fetch(`${API_URL}/api/store/revenue/update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(`${currentUsername}:${document.getElementById('password').value}`)
+            },
+            body: JSON.stringify({
+                store_id: currentStore,
+                date: updateDate,
+                revenue_type: revenueType,
+                new_amount: newAmount
+            })
+        });
 
-        if (fetchError) throw fetchError;
-
-        if (!existingData || existingData.length === 0) {
-            resultDiv.innerHTML = '<div class="alert alert-error">❌ Không tìm thấy dữ liệu doanh thu cho ngày này!</div>';
-            return;
+        const result = await res.json();
+        if (res.ok) {
+            resultDiv.innerHTML = `<div class="alert alert-success">✅ ${result.message}</div>`;
+            setTimeout(() => resultDiv.innerHTML = '', 5000);
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-error">❌ ${result.detail}</div>`;
         }
-
-        const recordId = existingData[0].id;
-        const oldAmount = existingData[0][revenueType];
-
-        // Tính lại tổng doanh thu
-        const oldTotal = existingData[0].total_revenue;
-        const newTotal = oldTotal - oldAmount + newAmount;
-
-        // Cập nhật bản ghi
-        const updateData = {
-            [revenueType]: newAmount,
-            total_revenue: newTotal
-        };
-
-        const { error: updateError } = await supabase
-            .from('sale_quan')
-            .update(updateData)
-            .eq('id', recordId);
-
-        if (updateError) throw updateError;
-
-        const revenueTypeNames = {
-            'cash_revenue': 'Tiền Mặt',
-            'transfer_revenue': 'Chuyển Khoản',
-            'grab_revenue': 'Grab',
-            'shopee_revenue': 'Shopee'
-        };
-
-        resultDiv.innerHTML = `
-            <div class="alert alert-success">
-                ✅ Đã cập nhật ${revenueTypeNames[revenueType]} thành công!<br>
-                Số tiền cũ: ${oldAmount.toLocaleString('vi-VN')} VNĐ → Số tiền mới: ${newAmount.toLocaleString('vi-VN')} VNĐ<br>
-            </div>
-        `;
-
-        // Reset form
-        document.getElementById('revenueTypeSelect').value = '';
-        document.getElementById('updateRevenueAmount').value = '';
-
-        setTimeout(() => {
-            resultDiv.innerHTML = '';
-        }, 5000);
-
-    } catch (error) {
-        console.error('Error:', error);
-        resultDiv.innerHTML = `<div class="alert alert-error">❌ Lỗi khi cập nhật: ${error.message}</div>`;
+    } catch (err) {
+        resultDiv.innerHTML = `<div class="alert alert-error">❌ ${err.message}</div>`;
     }
 }
     </script>
