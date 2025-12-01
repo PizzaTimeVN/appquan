@@ -1167,6 +1167,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             currentStore = result.store_id; // ← Lấy từ response
             currentUser = result.user.display_name; // ← Đúng cấu trúc
             currentUsername = username;
+            currentPassword = password;
             showApp();
         } else {
             alert('❌ ' + (result.detail || 'Sai tên đăng nhập hoặc mật khẩu!'));
